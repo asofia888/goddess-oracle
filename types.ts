@@ -24,6 +24,7 @@ export type NewReading = Omit<SavedReading, 'id' | 'date'>;
 export interface GenerateMessageRequestBody {
   cards: GoddessCardData[];
   mode: 'single' | 'three';
+  language?: 'ja' | 'en';
 }
 
 // FIX: Add GenerateImageRequestBody type for the image generation API endpoint.

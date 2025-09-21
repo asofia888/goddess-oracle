@@ -8,6 +8,7 @@ import JournalModal from './components/JournalModal';
 import DisclaimerModal from './components/DisclaimerModal';
 import ManualModal from './components/ManualModal';
 import { getReadings, clearReadings } from './utils/storage';
+import { detectLanguage, getTranslation, type Language } from './utils/i18n';
 
 // Fisher-Yates shuffle algorithm
 const shuffleArray = <T,>(array: T[]): T[] => {
@@ -33,6 +34,8 @@ const App: React.FC = () => {
   const [isDisclaimerOpen, setIsDisclaimerOpen] = useState(false);
   const [isManualOpen, setIsManualOpen] = useState(false);
   const [randomStyles, setRandomStyles] = useState<React.CSSProperties[]>([]);
+  const [language, setLanguage] = useState<Language>('en');
+  const [t, setT] = useState(getTranslation('en'));
 
 
   const shuffleAndSetCards = useCallback(() => {
@@ -40,9 +43,18 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const detectedLang = detectLanguage();
+    setLanguage(detectedLang);
+    setT(getTranslation(detectedLang));
     setCards(shuffleArray(GODDESS_CARDS));
     setReadings(getReadings());
   }, []);
+
+  const toggleLanguage = () => {
+    const newLang = language === 'ja' ? 'en' : 'ja';
+    setLanguage(newLang);
+    setT(getTranslation(newLang));
+  };
   
   const performAnimatedShuffle = useCallback(() => {
     if (isAnimating) return;
@@ -101,9 +113,13 @@ const App: React.FC = () => {
   
   const getInstructionText = () => {
     if (readingMode === 'single') {
-        return 'カードを1枚選んで、導きのメッセージを受け取りましょう。'
+        return language === 'ja'
+          ? 'カードを1枚選んで、導きのメッセージを受け取りましょう。'
+          : 'Select one card to receive your guidance message.'
     }
-    return `過去、現在、未来を示すカードを3枚選んでください。(${selectedCards.length}/3)`
+    return language === 'ja'
+      ? `過去、現在、未来を示すカードを3枚選んでください。(${selectedCards.length}/3)`
+      : `Please select 3 cards representing past, present, and future. (${selectedCards.length}/3)`
   }
 
   const handleClearHistory = () => {
@@ -115,12 +131,19 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-violet-50 text-slate-800 p-4 sm:p-8 overflow-hidden">
       <header className="text-center mb-4 animate-fadeIn relative">
         <img src="/logo.png" alt="女神のオラクル ロゴ" className="mx-auto mb-4" style={{width: '180px', height: '180px'}} />
-        <h1 className="text-4xl sm:text-6xl font-bold text-orange-900/90 tracking-wider">女神のオラクル</h1>
+        <h1 className="text-4xl sm:text-6xl font-bold text-orange-900/90 tracking-wider">{t.appTitle}</h1>
         <div className="absolute top-0 right-0 h-full flex items-center space-x-1 sm:space-x-2">
+          <button
+            onClick={toggleLanguage}
+            className="p-2 text-sm bg-white/80 backdrop-blur-sm rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors shadow-sm"
+            title={language === 'ja' ? 'Switch to English' : '日本語に切り替え'}
+          >
+            {language === 'ja' ? 'EN' : 'JA'}
+          </button>
           <button
             onClick={() => setIsManualOpen(true)}
             className="p-2 rounded-full text-amber-700/80 hover:bg-amber-200/50 transition-colors"
-            aria-label="使い方ガイドを開く"
+            aria-label={t.manual}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-7 sm:w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -143,13 +166,13 @@ const App: React.FC = () => {
           onClick={() => handleModeChange('single')}
           className={`px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base font-semibold transition-all duration-300 ${readingMode === 'single' ? 'bg-white shadow text-amber-800' : 'text-amber-700/80 hover:bg-white/50'}`}
         >
-          1枚引き
+          {t.singleCard}
         </button>
         <button 
           onClick={() => handleModeChange('three')}
           className={`px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base font-semibold transition-all duration-300 ${readingMode === 'three' ? 'bg-white shadow text-amber-800' : 'text-amber-700/80 hover:bg-white/50'}`}
         >
-          3枚引き
+          {t.threeCards}
         </button>
       </div>
 
@@ -158,13 +181,13 @@ const App: React.FC = () => {
           onClick={() => handleLevelChange('normal')}
           className={`px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base font-semibold transition-all duration-300 ${readingLevel === 'normal' ? 'bg-white shadow text-purple-800' : 'text-purple-700/80 hover:bg-white/50'}`}
         >
-          通常リーディング
+          {language === 'ja' ? '通常リーディング' : 'Normal Reading'}
         </button>
         <button
           onClick={() => handleLevelChange('deep')}
           className={`px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base font-semibold transition-all duration-300 ${readingLevel === 'deep' ? 'bg-white shadow text-purple-800' : 'text-purple-700/80 hover:bg-white/50'}`}
         >
-          深い洞察リーディング
+          {language === 'ja' ? '深い洞察リーディング' : 'Deep Insight Reading'}
         </button>
       </div>
       
@@ -178,7 +201,7 @@ const App: React.FC = () => {
             onClick={() => setIsModalOpen(true)}
             className="bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105 animate-pulse-draw"
           >
-            結果を見る
+            {language === 'ja' ? '結果を見る' : 'View Results'}
           </button>
         </div>
       )}
@@ -211,7 +234,7 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      <MessageModal cards={selectedCards} isOpen={isModalOpen} onClose={handleReset} readingLevel={readingLevel} />
+      <MessageModal cards={selectedCards} isOpen={isModalOpen} onClose={handleReset} readingLevel={readingLevel} language={language} t={t} />
       <JournalModal readings={readings} isOpen={isJournalOpen} onClose={() => setIsJournalOpen(false)} onClear={handleClearHistory} />
       <DisclaimerModal isOpen={isDisclaimerOpen} onClose={() => setIsDisclaimerOpen(false)} />
       <ManualModal isOpen={isManualOpen} onClose={() => setIsManualOpen(false)} />
@@ -223,7 +246,7 @@ const App: React.FC = () => {
           onClick={() => setIsDisclaimerOpen(true)}
           className="mt-2 text-xs text-stone-500 underline hover:text-amber-900 transition-colors"
         >
-          免責事項・利用規約
+          {t.disclaimer}
         </button>
       </footer>
        <style>{`

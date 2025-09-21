@@ -2,12 +2,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import type { GoddessCardData, NewReading, ReadingLevel } from '../types';
 import { saveReading } from '../utils/storage';
+import type { Language, Translations } from '../utils/i18n';
 
 interface MessageModalProps {
   cards: GoddessCardData[];
   isOpen: boolean;
   onClose: () => void;
   readingLevel: ReadingLevel;
+  language: Language;
+  t: Translations;
 }
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -108,7 +111,7 @@ const ThreeCardSpread: React.FC<{ cards: GoddessCardData[]; isLoading: boolean; 
 );
 
 
-const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, readingLevel }) => {
+const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, readingLevel, language, t }) => {
   const [generatedMessages, setGeneratedMessages] = useState<(string | null)[]>([]);
   const [isMessageLoading, setIsMessageLoading] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
