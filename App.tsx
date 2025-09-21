@@ -114,7 +114,7 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-violet-50 text-slate-800 p-4 sm:p-8 overflow-hidden">
       <header className="text-center mb-4 animate-fadeIn relative">
-        <img src="/logo.png" alt="女神のオラクル ロゴ" className="w-10 h-10 mx-auto mb-2" />
+        <img src="/logo.png" alt="女神のオラクル ロゴ" className="mx-auto mb-2" style={{width: '200px', height: '200px'}} />
         <h1 className="text-4xl sm:text-6xl font-bold text-orange-900/90 tracking-wider">女神のオラクル</h1>
         <div className="absolute top-0 right-0 h-full flex items-center space-x-1 sm:space-x-2">
           <button
