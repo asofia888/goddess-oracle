@@ -1,7 +1,7 @@
 {
   "name": "copy-of-女神のオラクルガイダンス",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "engines": {
     "node": "22.x"
