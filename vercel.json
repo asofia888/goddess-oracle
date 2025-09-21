@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "api/generateMessage.ts": {
+      "runtime": "edge"
+    },
+    "api/generateImage.ts": {
+      "runtime": "edge"
+    }
+  }
+}

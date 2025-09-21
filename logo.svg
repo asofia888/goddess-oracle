@@ -1,0 +1,28 @@
+<svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d946ef"/>
+    </linearGradient>
+    <linearGradient id="moon-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef3c7"/>
+      <stop offset="100%" stop-color="#fde68a"/>
+    </linearGradient>
+     <filter id="glow-filter" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.7 0" result="glow"/>
+      <feComposite in="glow" in2="SourceGraphic" operator="over"/>
+    </filter>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="62" fill="url(#logo-gradient)" />
+  <circle cx="64" cy="64" r="58" fill="#1e1b4b" />
+  
+  <!-- Crescent Moon -->
+  <path d="M 64 20 A 44 44 0 1 1 64 108 A 36 36 0 1 0 64 20 Z" fill="url(#moon-gradient)" filter="url(#glow-filter)"/>
+  
+  <!-- Stylized Lotus/Eye -->
+  <path d="M 64 50 C 78 50 88 64 88 64 C 88 64 78 78 64 78 C 50 78 40 64 40 64 C 40 64 50 50 64 50 Z" fill="none" stroke="url(#moon-gradient)" stroke-width="3" filter="url(#glow-filter)"/>
+  <circle cx="64" cy="64" r="6" fill="url(#moon-gradient)" filter="url(#glow-filter)"/>
+</svg>
