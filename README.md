@@ -8,6 +8,8 @@ This contains everything you need to run your app locally.
 
 View your app in AI Studio: https://ai.studio/apps/drive/1o31BlCTBp2cE0vRK6kvtl8lTNy0CfgPe
 
+**Deployed on Vercel with Node.js 22.x support**
+
 ## Run Locally
 
 **Prerequisites:**  Node.js
