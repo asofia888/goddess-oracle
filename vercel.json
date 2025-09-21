@@ -1,10 +1,7 @@
 {
   "functions": {
-    "api/generateMessage.ts": {
-      "runtime": "edge"
-    },
-    "api/generateImage.ts": {
-      "runtime": "edge"
+    "api/**/*.ts": {
+      "runtime": "@vercel/node@3.0.0"
     }
   }
 }
