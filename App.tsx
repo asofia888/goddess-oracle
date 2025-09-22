@@ -7,6 +7,7 @@ import MessageModal from './components/MessageModal';
 import JournalModal from './components/JournalModal';
 import DisclaimerModal from './components/DisclaimerModal';
 import ManualModal from './components/ManualModal';
+import LanguageSelector from './components/LanguageSelector';
 import { getReadings, clearReadings } from './utils/storage';
 import { detectLanguage, getTranslation } from './utils/i18n';
 
@@ -49,35 +50,9 @@ const App: React.FC = () => {
     setReadings(getReadings());
   }, []);
 
-  const toggleLanguage = () => {
-    let newLang: Language;
-    if (language === 'ja') {
-      newLang = 'en';
-    } else if (language === 'en') {
-      newLang = 'es';
-    } else {
-      newLang = 'ja';
-    }
-    setLanguage(newLang);
-    setT(getTranslation(newLang));
-  };
-
-  const getLanguageDisplayText = () => {
-    switch (language) {
-      case 'ja': return 'JA';
-      case 'en': return 'EN';
-      case 'es': return 'ES';
-      default: return 'EN';
-    }
-  };
-
-  const getLanguageTooltip = () => {
-    switch (language) {
-      case 'ja': return 'Switch to English';
-      case 'en': return 'Cambiar a Español';
-      case 'es': return '日本語に切り替え';
-      default: return 'Switch language';
-    }
+  const handleLanguageChange = (newLanguage: Language) => {
+    setLanguage(newLanguage);
+    setT(getTranslation(newLanguage));
   };
   
   const performAnimatedShuffle = useCallback(() => {
@@ -141,6 +116,8 @@ const App: React.FC = () => {
         return 'カードを1枚選んで、導きのメッセージを受け取りましょう。';
       } else if (language === 'es') {
         return 'Selecciona una carta para recibir tu mensaje de guía.';
+      } else if (language === 'fr') {
+        return 'Sélectionnez une carte pour recevoir votre message de guidance.';
       } else {
         return 'Select one card to receive your guidance message.';
       }
@@ -150,6 +127,8 @@ const App: React.FC = () => {
       return `過去、現在、未来を示すカードを3枚選んでください。(${selectedCards.length}/3)`;
     } else if (language === 'es') {
       return `Por favor selecciona 3 cartas que representen pasado, presente y futuro. (${selectedCards.length}/3)`;
+    } else if (language === 'fr') {
+      return `Veuillez sélectionner 3 cartes représentant le passé, le présent et l'avenir. (${selectedCards.length}/3)`;
     } else {
       return `Please select 3 cards representing past, present, and future. (${selectedCards.length}/3)`;
     }
@@ -166,13 +145,10 @@ const App: React.FC = () => {
         <img src="/logo.png" alt="女神のオラクル ロゴ" className="mx-auto mb-4" style={{width: '180px', height: '180px'}} />
         <h1 className="text-4xl sm:text-6xl font-bold text-orange-900/90 tracking-wider">{t.appTitle}</h1>
         <div className="absolute top-0 right-0 h-full flex items-center space-x-1 sm:space-x-2">
-          <button
-            onClick={toggleLanguage}
-            className="p-2 text-sm bg-white/80 backdrop-blur-sm rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors shadow-sm"
-            title={getLanguageTooltip()}
-          >
-            {getLanguageDisplayText()}
-          </button>
+          <LanguageSelector
+            currentLanguage={language}
+            onLanguageChange={handleLanguageChange}
+          />
           <button
             onClick={() => setIsManualOpen(true)}
             className="p-2 rounded-full text-amber-700/80 hover:bg-amber-200/50 transition-colors"
@@ -214,13 +190,19 @@ const App: React.FC = () => {
           onClick={() => handleLevelChange('normal')}
           className={`px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base font-semibold transition-all duration-300 ${readingLevel === 'normal' ? 'bg-white shadow text-purple-800' : 'text-purple-700/80 hover:bg-white/50'}`}
         >
-          {language === 'ja' ? '通常リーディング' : language === 'es' ? 'Lectura Normal' : 'Normal Reading'}
+          {language === 'ja' ? '通常リーディング' :
+           language === 'es' ? 'Lectura Normal' :
+           language === 'fr' ? 'Lecture Normale' :
+           'Normal Reading'}
         </button>
         <button
           onClick={() => handleLevelChange('deep')}
           className={`px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base font-semibold transition-all duration-300 ${readingLevel === 'deep' ? 'bg-white shadow text-purple-800' : 'text-purple-700/80 hover:bg-white/50'}`}
         >
-          {language === 'ja' ? '深い洞察リーディング' : language === 'es' ? 'Lectura Profunda' : 'Deep Insight Reading'}
+          {language === 'ja' ? '深い洞察リーディング' :
+           language === 'es' ? 'Lectura Profunda' :
+           language === 'fr' ? 'Lecture Profonde' :
+           'Deep Insight Reading'}
         </button>
       </div>
       
@@ -234,7 +216,10 @@ const App: React.FC = () => {
             onClick={() => setIsModalOpen(true)}
             className="bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105 animate-pulse-draw"
           >
-            {language === 'ja' ? '結果を見る' : language === 'es' ? 'Ver Resultados' : 'View Results'}
+            {language === 'ja' ? '結果を見る' :
+             language === 'es' ? 'Ver Resultados' :
+             language === 'fr' ? 'Voir les Résultats' :
+             'View Results'}
           </button>
         </div>
       )}
@@ -277,6 +262,7 @@ const App: React.FC = () => {
         <p>
           {language === 'ja' ? '日々の神聖な繋がりのひとときを。' :
            language === 'es' ? 'Momentos de conexión sagrada en tu día a día.' :
+           language === 'fr' ? 'Des moments de connexion sacrée dans votre quotidien.' :
            'Sacred moments of connection in your daily life.'}
         </p>
         <button

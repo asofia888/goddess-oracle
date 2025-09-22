@@ -1,4 +1,4 @@
-export type Language = 'ja' | 'en' | 'es';
+export type Language = 'ja' | 'en' | 'es' | 'fr';
 
 export interface Translations {
   appTitle: string;
@@ -145,6 +145,42 @@ export const translations: Record<Language, Translations> = {
       journalTitle: 'Función de Diario',
       journalDesc: 'Revisa los resultados de tus lecturas pasadas. Úsalo como un registro de tu crecimiento personal.'
     }
+  },
+  fr: {
+    appTitle: 'Oracle de la Déesse',
+    subtitle: 'Guidance Spirituelle',
+    singleCard: 'Une Carte',
+    threeCards: 'Trois Cartes',
+    shuffleCards: 'Mélanger les Cartes',
+    journal: 'Journal',
+    manual: 'Mode d\'emploi',
+    disclaimer: 'Avertissement',
+    past: 'Passé',
+    present: 'Présent',
+    future: 'Futur',
+    cardReading: 'Lecture de Cartes',
+    threeCardSpread: 'Tirage à Trois Cartes',
+    close: 'Fermer',
+    clearAll: 'Tout Effacer',
+    noReadings: 'Aucune lecture pour l\'instant',
+    readingHistory: 'Historique des Lectures',
+    howToUse: 'Mode d\'emploi',
+    important: 'Important',
+    entertainment: 'Divertissement',
+    disclaimerText: 'Cette application est créée à des fins de divertissement et ne fournit pas de vraie divination ou de guidance spirituelle. Veuillez consulter des professionnels appropriés pour les décisions importantes de la vie.',
+    iUnderstand: 'Je Comprends',
+    theme: 'Thème',
+    affirmation: 'Affirmation',
+    dailyGuidance: 'Guidance Quotidienne',
+    manualContent: {
+      title: 'Guide de l\'Oracle de la Déesse - Mode d\'emploi',
+      singleCardTitle: 'Lecture d\'Une Carte',
+      singleCardDesc: 'Utilisez-la quand vous voulez une perception profonde sur une question ou situation spécifique. Cliquez pour sélectionner une carte.',
+      threeCardTitle: 'Lecture de Trois Cartes (Passé, Présent, Futur)',
+      threeCardDesc: 'Utilisez-la quand vous voulez comprendre une situation dans le flux du temps. Sélectionnez trois cartes en séquence.',
+      journalTitle: 'Fonction Journal',
+      journalDesc: 'Revoyez vos résultats de lectures passées. Utilisez-le comme un enregistrement de votre croissance personnelle.'
+    }
   }
 };
 
@@ -161,6 +197,11 @@ export const detectLanguage = (): Language => {
   // スペイン語圏の判定
   if (browserLang.startsWith('es')) {
     return 'es';
+  }
+
+  // フランス語圏の判定
+  if (browserLang.startsWith('fr')) {
+    return 'fr';
   }
 
   return 'en';
