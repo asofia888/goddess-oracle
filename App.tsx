@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { GODDESS_CARDS } from './constants';
-import type { GoddessCardData, SavedReading, ReadingLevel } from './types';
+import type { GoddessCardData, SavedReading, ReadingLevel, ReadingMode, Language } from './types';
 import OracleCard from './components/OracleCard';
 import MessageModal from './components/MessageModal';
 import JournalModal from './components/JournalModal';
 import DisclaimerModal from './components/DisclaimerModal';
 import ManualModal from './components/ManualModal';
 import { getReadings, clearReadings } from './utils/storage';
-import { detectLanguage, getTranslation, type Language } from './utils/i18n';
+import { detectLanguage, getTranslation } from './utils/i18n';
 
 // Fisher-Yates shuffle algorithm
 const shuffleArray = <T,>(array: T[]): T[] => {
@@ -20,7 +20,6 @@ const shuffleArray = <T,>(array: T[]): T[] => {
   return newArray;
 };
 
-type ReadingMode = 'single' | 'three';
 
 const App: React.FC = () => {
   const [cards, setCards] = useState<GoddessCardData[]>([]);

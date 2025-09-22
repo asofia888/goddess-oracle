@@ -3,6 +3,11 @@ import { GoogleGenAI, Type } from "@google/genai";
 import type { GoddessCardData, NewReading, ReadingLevel } from '../types';
 import { saveReading } from '../utils/storage';
 import type { Language, Translations } from '../utils/i18n';
+import Modal from './shared/Modal';
+import LoadingSpinner from './shared/LoadingSpinner';
+import CardTheme from './ui/CardTheme';
+import CardAffirmation from './ui/CardAffirmation';
+import CardGuidance from './ui/CardGuidance';
 
 interface MessageModalProps {
   cards: GoddessCardData[];
@@ -47,15 +52,6 @@ const threeCardResponseSchema = {
     required: ["past", "present", "future"],
 };
 
-const LoadingSpinner: React.FC<{ text: string }> = ({ text }) => (
-    <div className="flex items-center justify-center text-amber-700 text-sm mt-4 py-4">
-        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-amber-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        <span>{text}</span>
-    </div>
-);
 
 
 const SingleCardView: React.FC<{ card: GoddessCardData; isMessageLoading: boolean; isImageLoading: boolean; generatedMessage: string | null; generatedImageUrl: string | null; }> = ({ card, isMessageLoading, isImageLoading, generatedMessage, generatedImageUrl }) => (
@@ -75,9 +71,8 @@ const SingleCardView: React.FC<{ card: GoddessCardData; isMessageLoading: boolea
       {card.description}
     </p>
 
-    <div className="bg-amber-50/50 p-3 rounded-lg border border-amber-200/50 mt-4 mb-4">
-      <h3 className="text-lg font-semibold text-orange-800 mb-1">テーマ</h3>
-      <p className="text-md text-stone-700 font-medium">{card.theme}</p>
+    <div className="mt-4 mb-4">
+      <CardTheme theme={card.theme} />
     </div>
 
     {isMessageLoading ? (
@@ -91,24 +86,8 @@ const SingleCardView: React.FC<{ card: GoddessCardData; isMessageLoading: boolea
     )}
 
     <div className="space-y-4">
-      <div className="bg-yellow-50/50 p-3 rounded-lg border border-yellow-200/50">
-        <h3 className="text-lg font-semibold text-yellow-800 mb-2">アファメーション</h3>
-        <p className="text-base text-stone-700 italic leading-relaxed">
-          "{card.affirmation}"
-        </p>
-      </div>
-
-      <div className="bg-teal-50/50 p-3 rounded-lg border border-teal-200/50">
-        <h3 className="text-lg font-semibold text-teal-800 mb-2">日常のガイダンス</h3>
-        <ul className="space-y-1 text-left">
-          {card.dailyGuidance.map((guidance, index) => (
-            <li key={index} className="text-sm text-stone-700 flex items-start">
-              <span className="text-teal-600 mr-2">•</span>
-              {guidance}
-            </li>
-          ))}
-        </ul>
-      </div>
+      <CardAffirmation affirmation={card.affirmation} />
+      <CardGuidance guidance={card.dailyGuidance} />
     </div>
   </div>
 );
@@ -125,9 +104,8 @@ const ThreeCardSpread: React.FC<{ cards: GoddessCardData[]; isLoading: boolean; 
           <h4 className="text-2xl font-semibold text-orange-800 text-center">{card.name}</h4>
           <p className="text-sm text-amber-700 mt-1 italic text-center">{card.description}</p>
 
-          <div className="bg-amber-50/80 p-2 rounded-md border border-amber-200/50 mt-3 mb-3">
-            <h5 className="text-sm font-semibold text-orange-700 mb-1 text-center">テーマ</h5>
-            <p className="text-sm text-stone-700 font-medium text-center">{card.theme}</p>
+          <div className="mt-3 mb-3">
+            <CardTheme theme={card.theme} size="sm" />
           </div>
 
           <div className="flex-grow">
@@ -267,60 +245,48 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
   const isSingleCard = cards.length === 1;
 
   return (
-    <div
-      className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity duration-300 ease-in-out animate-fadeInModal"
-      onClick={onClose}
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth={isSingleCard ? 'lg' : '5xl'}
+      className="p-6 sm:p-8 flex flex-col items-center gap-4 sm:gap-6"
     >
-      <div
-        className={`bg-violet-50 border border-amber-200/50 rounded-2xl shadow-2xl shadow-amber-500/20 w-11/12 max-h-[90vh] overflow-y-auto p-6 sm:p-8 flex flex-col items-center gap-4 sm:gap-6 animate-zoomIn ${isSingleCard ? 'max-w-lg' : 'max-w-5xl'}`}
-        onClick={(e) => e.stopPropagation()}
+      {isSingleCard
+          ? <SingleCardView card={cards[0]} isMessageLoading={isMessageLoading} isImageLoading={isImageLoading} generatedMessage={generatedMessages[0]} generatedImageUrl={generatedImageUrl} />
+          : <ThreeCardSpread cards={cards} isLoading={isMessageLoading} generatedMessages={generatedMessages} />
+      }
+
+      {error && (
+        <div className="text-center mt-6 p-4 bg-red-100/50 border border-red-200 rounded-lg">
+          <p className="text-red-600 text-sm font-medium">{error}</p>
+          <button
+            onClick={generateAllContent}
+            className="mt-3 bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-5 rounded-full text-sm transition-transform transform hover:scale-105"
+            aria-label="生成を再試行する"
+          >
+            再試行
+          </button>
+        </div>
+      )}
+
+      <button
+        onClick={onClose}
+        className="mt-8 bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-6 rounded-full shadow-md transition-transform transform hover:scale-105"
+        aria-label="モーダルを閉じてカードを引き直す"
       >
-        {isSingleCard 
-            ? <SingleCardView card={cards[0]} isMessageLoading={isMessageLoading} isImageLoading={isImageLoading} generatedMessage={generatedMessages[0]} generatedImageUrl={generatedImageUrl} /> 
-            : <ThreeCardSpread cards={cards} isLoading={isMessageLoading} generatedMessages={generatedMessages} />
-        }
-        
-        {error && (
-          <div className="text-center mt-6 p-4 bg-red-100/50 border border-red-200 rounded-lg">
-            <p className="text-red-600 text-sm font-medium">{error}</p>
-            <button
-              onClick={generateAllContent}
-              className="mt-3 bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-5 rounded-full text-sm transition-transform transform hover:scale-105"
-              aria-label="生成を再試行する"
-            >
-              再試行
-            </button>
-          </div>
-        )}
-        
-        <button
-          onClick={onClose}
-          className="mt-8 bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-6 rounded-full shadow-md transition-transform transform hover:scale-105"
-          aria-label="モーダルを閉じてカードを引き直す"
-        >
-          もう一度引く
-        </button>
-      </div>
+        もう一度引く
+      </button>
+
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
         }
-        @keyframes fadeInModal {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes zoomIn {
-          from { opacity: 0; transform: scale(0.9); }
-          to { opacity: 1; transform: scale(1); }
-        }
         .animate-fadeIn { animation: fadeIn 1s ease-in-out; }
-        .animate-fadeInModal { animation: fadeInModal 0.3s ease-in-out; }
-        .animate-zoomIn { animation: zoomIn 0.3s ease-out; }
         .perspective-1000 { perspective: 1000px; }
         .transform-style-3d { transform-style: preserve-3d; }
       `}</style>
-    </div>
+    </Modal>
   );
 };
 
