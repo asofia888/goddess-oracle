@@ -3,14 +3,16 @@ import React from 'react';
 
 interface OracleCardProps {
   onClick: () => void;
+  onDoubleClick?: () => void;
   isSelected?: boolean;
 }
 
-const OracleCard: React.FC<OracleCardProps> = ({ onClick, isSelected = false }) => {
+const OracleCard: React.FC<OracleCardProps> = ({ onClick, onDoubleClick, isSelected = false }) => {
   return (
     <div
       className={`aspect-[2/3] w-full rounded-lg shadow-lg shadow-amber-500/20 cursor-pointer group perspective-1000 transition-transform duration-300 ${isSelected ? '-translate-y-3' : ''}`}
       onClick={onClick}
+      onDoubleClick={onDoubleClick}
     >
       <div className={`relative w-full h-full transition-transform duration-500 transform-style-3d group-hover:scale-105 group-hover:-translate-y-2 rounded-lg transform-gpu ${isSelected ? 'ring-4 ring-amber-400 ring-offset-2 ring-offset-violet-50' : ''}`}>
         {/* Card Back */}
