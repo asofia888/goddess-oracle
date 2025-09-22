@@ -1,7 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { GoddessCardData, GenerateMessageRequestBody } from '../types';
 
-const generateSingleCardMessagePrompt = (card: GoddessCardData, language: 'ja' | 'en' = 'ja') => {
+const generateSingleCardMessagePrompt = (card: GoddessCardData, language: 'ja' | 'en' | 'es' = 'ja') => {
   if (language === 'en') {
     return `You are channeling ${card.name}, the ${card.origin} goddess specializing in "${card.theme}".
 
@@ -20,6 +20,26 @@ const generateSingleCardMessagePrompt = (card: GoddessCardData, language: 'ja' |
     [Loving guidance paragraph mentioning ${card.element} element]
     [2-3 practical daily steps as bullet points]
     [Closing encouragement with affirmation]`;
+  }
+
+  if (language === 'es') {
+    return `Estás canalizando a ${card.name}, la diosa ${card.origin} especializada en "${card.theme}".
+
+    Crea un mensaje del oráculo amoroso y alentador al estilo de Doreen Virtue:
+    - Enfócate en el tema: ${card.theme}
+    - Palabras clave para incluir naturalmente: ${card.keywords.join(', ')}
+    - Energía del elemento: ${card.element}
+    - Incluye 2-3 pasos prácticos de guía diaria
+    - Añade la afirmación: "${card.affirmation}"
+    - Tono: amoroso, solidario, empoderador, gentil
+    - Longitud: 100-150 palabras
+    - Incluye simbolismo de: ${card.symbols.join(', ')}
+
+    Formato:
+    **Mensaje de ${card.name} - ${card.theme}**
+    [Párrafo de guía amorosa mencionando el elemento ${card.element}]
+    [2-3 pasos diarios prácticos como puntos]
+    [Cierre alentador con afirmación]`;
   }
 
   return `あなたは${card.origin}の女神「${card.name}」からのメッセージを伝える神託です。
@@ -41,7 +61,7 @@ const generateSingleCardMessagePrompt = (card: GoddessCardData, language: 'ja' |
   [アファメーションを含む励ましの締めくくり]`;
 };
 
-const generateThreeCardSpreadMessagePrompt = (cards: GoddessCardData[], language: 'ja' | 'en' = 'ja') => {
+const generateThreeCardSpreadMessagePrompt = (cards: GoddessCardData[], language: 'ja' | 'en' | 'es' = 'ja') => {
   if (language === 'en') {
     return `You are a sacred oracle performing a three-card reading for past, present, and future in Doreen Virtue's style.
 
@@ -59,6 +79,25 @@ Create three interconnected messages that form a cohesive spiritual narrative:
 
 Format as JSON with past, present, future keys.`;
   }
+
+  if (language === 'es') {
+    return `Eres un oráculo sagrado realizando una lectura de tres cartas para pasado, presente y futuro al estilo de Doreen Virtue.
+
+Carta del pasado: "${cards[0].name}" - ${cards[0].theme} (${cards[0].origin}).
+Carta del presente: "${cards[1].name}" - ${cards[1].theme} (${cards[1].origin}).
+Carta del futuro: "${cards[2].name}" - ${cards[2].theme} (${cards[2].origin}).
+
+Crea tres mensajes interconectados que formen una narrativa espiritual cohesiva:
+- Cada mensaje debe enfocarse en el tema específico de su carta
+- Incluye las energías de los elementos naturalmente: ${cards.map(c => c.element).join(', ')}
+- Tono: guía amorosa, alentadora y gentil
+- Los mensajes deben fluir juntos como una historia de crecimiento
+- Incluye guía práctica dentro de cada mensaje
+- Longitud: Cada mensaje 80-120 palabras
+
+Formato como JSON con claves past, present, future.`;
+  }
+
   return `あなたは神聖な神託です。Doreen Virtue風の過去、現在、未来を占う3枚引きのリーディングを行います。
 
 過去のカード：「${cards[0].name}」- ${cards[0].theme}（${cards[0].origin}）

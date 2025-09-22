@@ -54,7 +54,7 @@ const threeCardResponseSchema = {
 
 
 
-const SingleCardView: React.FC<{ card: GoddessCardData; isMessageLoading: boolean; isImageLoading: boolean; generatedMessage: string | null; generatedImageUrl: string | null; }> = ({ card, isMessageLoading, isImageLoading, generatedMessage, generatedImageUrl }) => (
+const SingleCardView: React.FC<{ card: GoddessCardData; isMessageLoading: boolean; isImageLoading: boolean; generatedMessage: string | null; generatedImageUrl: string | null; t: Translations; }> = ({ card, isMessageLoading, isImageLoading, generatedMessage, generatedImageUrl, t }) => (
   <div className="text-center w-full">
     <div className="w-full max-w-xs mx-auto aspect-[3/4] bg-amber-100 rounded-lg mb-6 flex items-center justify-center border border-amber-200/50 shadow-inner overflow-hidden">
       {isImageLoading ? (
@@ -72,7 +72,7 @@ const SingleCardView: React.FC<{ card: GoddessCardData; isMessageLoading: boolea
     </p>
 
     <div className="mt-4 mb-4">
-      <CardTheme theme={card.theme} />
+      <CardTheme theme={card.theme} label={t.theme} />
     </div>
 
     {isMessageLoading ? (
@@ -86,13 +86,13 @@ const SingleCardView: React.FC<{ card: GoddessCardData; isMessageLoading: boolea
     )}
 
     <div className="space-y-4">
-      <CardAffirmation affirmation={card.affirmation} />
-      <CardGuidance guidance={card.dailyGuidance} />
+      <CardAffirmation affirmation={card.affirmation} label={t.affirmation} />
+      <CardGuidance guidance={card.dailyGuidance} label={t.dailyGuidance} />
     </div>
   </div>
 );
 
-const ThreeCardSpread: React.FC<{ cards: GoddessCardData[]; isLoading: boolean; generatedMessages: (string | null)[] }> = ({ cards, isLoading, generatedMessages }) => (
+const ThreeCardSpread: React.FC<{ cards: GoddessCardData[]; isLoading: boolean; generatedMessages: (string | null)[]; t: Translations; }> = ({ cards, isLoading, generatedMessages, t }) => (
   <div className="flex flex-col items-center w-full">
     <h2 className="text-4xl sm:text-5xl font-bold text-orange-800 tracking-wide mb-6">あなたのリーディング</h2>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 text-left w-full">
@@ -105,7 +105,7 @@ const ThreeCardSpread: React.FC<{ cards: GoddessCardData[]; isLoading: boolean; 
           <p className="text-sm text-amber-700 mt-1 italic text-center">{card.description}</p>
 
           <div className="mt-3 mb-3">
-            <CardTheme theme={card.theme} size="sm" />
+            <CardTheme theme={card.theme} size="sm" label={t.theme} />
           </div>
 
           <div className="flex-grow">
@@ -252,8 +252,8 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
       className="p-6 sm:p-8 flex flex-col items-center gap-4 sm:gap-6"
     >
       {isSingleCard
-          ? <SingleCardView card={cards[0]} isMessageLoading={isMessageLoading} isImageLoading={isImageLoading} generatedMessage={generatedMessages[0]} generatedImageUrl={generatedImageUrl} />
-          : <ThreeCardSpread cards={cards} isLoading={isMessageLoading} generatedMessages={generatedMessages} />
+          ? <SingleCardView card={cards[0]} isMessageLoading={isMessageLoading} isImageLoading={isImageLoading} generatedMessage={generatedMessages[0]} generatedImageUrl={generatedImageUrl} t={t} />
+          : <ThreeCardSpread cards={cards} isLoading={isMessageLoading} generatedMessages={generatedMessages} t={t} />
       }
 
       {error && (

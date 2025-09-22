@@ -1,4 +1,4 @@
-export type Language = 'ja' | 'en';
+export type Language = 'ja' | 'en' | 'es';
 
 export interface Translations {
   appTitle: string;
@@ -23,6 +23,9 @@ export interface Translations {
   entertainment: string;
   disclaimerText: string;
   iUnderstand: string;
+  theme: string;
+  affirmation: string;
+  dailyGuidance: string;
   manualContent: {
     title: string;
     singleCardTitle: string;
@@ -58,6 +61,9 @@ export const translations: Record<Language, Translations> = {
     entertainment: 'エンターテイメント',
     disclaimerText: 'このアプリは娯楽目的で作成されており、実際の占いや霊的指導を提供するものではありません。重要な人生の決断は、適切な専門家にご相談ください。',
     iUnderstand: '理解しました',
+    theme: 'テーマ',
+    affirmation: 'アファメーション',
+    dailyGuidance: '日常のガイダンス',
     manualContent: {
       title: '女神のオラクルガイダンス 使い方',
       singleCardTitle: '1枚引き',
@@ -91,6 +97,9 @@ export const translations: Record<Language, Translations> = {
     entertainment: 'Entertainment',
     disclaimerText: 'This app is created for entertainment purposes and does not provide actual divination or spiritual guidance. Please consult appropriate professionals for important life decisions.',
     iUnderstand: 'I Understand',
+    theme: 'Theme',
+    affirmation: 'Affirmation',
+    dailyGuidance: 'Daily Guidance',
     manualContent: {
       title: 'Goddess Oracle Guidance - How to Use',
       singleCardTitle: 'Single Card Reading',
@@ -99,6 +108,42 @@ export const translations: Record<Language, Translations> = {
       threeCardDesc: 'Use this when you want to understand a situation within the flow of time. Select three cards in sequence.',
       journalTitle: 'Journal Feature',
       journalDesc: 'Review your past reading results. Use this as a record of your personal growth.'
+    }
+  },
+  es: {
+    appTitle: 'Oráculo de la Diosa',
+    subtitle: 'Guía Espiritual',
+    singleCard: 'Una Carta',
+    threeCards: 'Tres Cartas',
+    shuffleCards: 'Barajar Cartas',
+    journal: 'Diario',
+    manual: 'Cómo Usar',
+    disclaimer: 'Descargo de Responsabilidad',
+    past: 'Pasado',
+    present: 'Presente',
+    future: 'Futuro',
+    cardReading: 'Lectura de Cartas',
+    threeCardSpread: 'Tirada de Tres Cartas',
+    close: 'Cerrar',
+    clearAll: 'Borrar Todo',
+    noReadings: 'Aún no hay lecturas',
+    readingHistory: 'Historial de Lecturas',
+    howToUse: 'Cómo Usar',
+    important: 'Importante',
+    entertainment: 'Entretenimiento',
+    disclaimerText: 'Esta aplicación está creada con fines de entretenimiento y no proporciona adivinación real o guía espiritual. Por favor, consulte a profesionales apropiados para decisiones importantes de la vida.',
+    iUnderstand: 'Entiendo',
+    theme: 'Tema',
+    affirmation: 'Afirmación',
+    dailyGuidance: 'Guía Diaria',
+    manualContent: {
+      title: 'Guía del Oráculo de la Diosa - Cómo Usar',
+      singleCardTitle: 'Lectura de Una Carta',
+      singleCardDesc: 'Úsala cuando quieras una percepción profunda sobre una pregunta o situación específica. Haz clic para seleccionar una carta.',
+      threeCardTitle: 'Lectura de Tres Cartas (Pasado, Presente, Futuro)',
+      threeCardDesc: 'Úsala cuando quieras entender una situación en el flujo del tiempo. Selecciona tres cartas en secuencia.',
+      journalTitle: 'Función de Diario',
+      journalDesc: 'Revisa los resultados de tus lecturas pasadas. Úsalo como un registro de tu crecimiento personal.'
     }
   }
 };
@@ -111,6 +156,11 @@ export const detectLanguage = (): Language => {
   // 日本語圏の判定
   if (browserLang.startsWith('ja')) {
     return 'ja';
+  }
+
+  // スペイン語圏の判定
+  if (browserLang.startsWith('es')) {
+    return 'es';
   }
 
   return 'en';

@@ -3,11 +3,13 @@ import React from 'react';
 interface CardAffirmationProps {
   affirmation: string;
   size?: 'sm' | 'md' | 'lg';
+  label?: string;
 }
 
 const CardAffirmation: React.FC<CardAffirmationProps> = ({
   affirmation,
-  size = 'md'
+  size = 'md',
+  label = 'アファメーション'
 }) => {
   const sizeClasses = {
     sm: {
@@ -30,7 +32,7 @@ const CardAffirmation: React.FC<CardAffirmationProps> = ({
   return (
     <div className={`bg-yellow-50/50 ${sizeClasses[size].container} rounded-lg border border-yellow-200/50`}>
       <h3 className={`${sizeClasses[size].title} text-yellow-800 mb-2`}>
-        アファメーション
+        {label}
       </h3>
       <p className={`${sizeClasses[size].text} text-stone-700 italic leading-relaxed`}>
         "{affirmation}"

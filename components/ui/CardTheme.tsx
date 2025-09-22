@@ -4,12 +4,14 @@ interface CardThemeProps {
   theme: string;
   size?: 'sm' | 'md' | 'lg';
   alignment?: 'left' | 'center' | 'right';
+  label?: string;
 }
 
 const CardTheme: React.FC<CardThemeProps> = ({
   theme,
   size = 'md',
-  alignment = 'center'
+  alignment = 'center',
+  label = 'テーマ'
 }) => {
   const sizeClasses = {
     sm: {
@@ -38,7 +40,7 @@ const CardTheme: React.FC<CardThemeProps> = ({
   return (
     <div className={`bg-amber-50/50 ${sizeClasses[size].container} rounded-lg border border-amber-200/50`}>
       <h3 className={`${sizeClasses[size].title} text-orange-800 mb-1 ${alignmentClasses[alignment]}`}>
-        テーマ
+        {label}
       </h3>
       <p className={`${sizeClasses[size].text} text-stone-700 font-medium ${alignmentClasses[alignment]}`}>
         {theme}

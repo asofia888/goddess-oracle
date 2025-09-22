@@ -3,11 +3,13 @@ import React from 'react';
 interface CardGuidanceProps {
   guidance: string[];
   size?: 'sm' | 'md' | 'lg';
+  label?: string;
 }
 
 const CardGuidance: React.FC<CardGuidanceProps> = ({
   guidance,
-  size = 'md'
+  size = 'md',
+  label = '日常のガイダンス'
 }) => {
   const sizeClasses = {
     sm: {
@@ -30,7 +32,7 @@ const CardGuidance: React.FC<CardGuidanceProps> = ({
   return (
     <div className={`bg-teal-50/50 ${sizeClasses[size].container} rounded-lg border border-teal-200/50`}>
       <h3 className={`${sizeClasses[size].title} text-teal-800 mb-2`}>
-        日常のガイダンス
+        {label}
       </h3>
       <ul className="space-y-1 text-left">
         {guidance.map((item, index) => (
