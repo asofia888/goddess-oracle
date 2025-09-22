@@ -4,7 +4,7 @@ export type ReadingLevel = 'normal' | 'deep';
 
 export type ReadingMode = 'single' | 'three';
 
-export type Language = 'ja' | 'en';
+export type Language = 'ja' | 'en' | 'es' | 'fr';
 
 export type Element = 'fire' | 'water' | 'earth' | 'air' | 'spirit';
 
