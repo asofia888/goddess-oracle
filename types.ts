@@ -6,6 +6,16 @@ export interface GoddessCardData {
   name: string;
   description: string;
   message: string;
+  // 新しいフィールド
+  theme: string;
+  secondaryThemes: string[];
+  origin: string;
+  element: 'fire' | 'water' | 'earth' | 'air' | 'spirit';
+  keywords: string[];
+  affirmation: string;
+  dailyGuidance: string[];
+  colors: string[];
+  symbols: string[];
 }
 
 export interface SavedReading {

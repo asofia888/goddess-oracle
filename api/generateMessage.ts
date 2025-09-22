@@ -3,24 +3,77 @@ import type { GoddessCardData, GenerateMessageRequestBody } from '../types';
 
 const generateSingleCardMessagePrompt = (card: GoddessCardData, language: 'ja' | 'en' = 'ja') => {
   if (language === 'en') {
-    return `You are a sacred oracle. Please convey a message from the goddess "${card.name}" (${card.description}). The original message is "${card.message}". Based on this information, generate a deeper, insightful, and personalized oracle message with a gentle yet powerful tone, as if the goddess herself is speaking. The message should be within 400 words and formatted with appropriate line breaks for readability.`;
+    return `You are channeling ${card.name}, the ${card.origin} goddess specializing in "${card.theme}".
+
+    Create a loving, encouraging oracle message in Doreen Virtue's style:
+    - Focus on the theme: ${card.theme}
+    - Keywords to naturally include: ${card.keywords.join(', ')}
+    - Element energy: ${card.element}
+    - Include 2-3 practical daily guidance steps
+    - Add the affirmation: "${card.affirmation}"
+    - Tone: loving, supportive, empowering, gentle
+    - Length: 100-150 words
+    - Include symbolism from: ${card.symbols.join(', ')}
+
+    Format:
+    **${card.name}'s Message - ${card.theme}**
+    [Loving guidance paragraph mentioning ${card.element} element]
+    [2-3 practical daily steps as bullet points]
+    [Closing encouragement with affirmation]`;
   }
-  return `あなたは神聖な神託です。女神「${card.name}」（${card.description}）からのメッセージを伝えてください。元のメッセージは「${card.message}」です。この情報に基づき、より深く、洞察に満ちた、パーソナライズされた神託のメッセージを、女神自身が語りかけるような、優しく力強い口調で生成してください。メッセージは550文字以内とし、適度に改行を入れて読みやすくしてください。`;
+
+  return `あなたは${card.origin}の女神「${card.name}」からのメッセージを伝える神託です。
+
+  Doreen Virtue風の愛に満ちたオラクルメッセージを作成してください：
+  - テーマ：${card.theme}
+  - 自然に含めるキーワード：${card.keywords.join('、')}
+  - エレメントエネルギー：${card.element}
+  - 実践的な日常ガイダンス（2-3つの具体的ステップ）
+  - アファメーション：「${card.affirmation}」
+  - トーン：愛に満ちた、励まし、力づける、優しい
+  - 長さ：100-150文字
+  - シンボリズム：${card.symbols.join('、')}
+
+  フォーマット：
+  **${card.name}からのメッセージ - ${card.theme}**
+  [${card.element}のエネルギーを含む愛のガイダンス段落]
+  [実践的な日常ステップを箇条書きで2-3個]
+  [アファメーションを含む励ましの締めくくり]`;
 };
 
 const generateThreeCardSpreadMessagePrompt = (cards: GoddessCardData[], language: 'ja' | 'en' = 'ja') => {
   if (language === 'en') {
-    return `You are a sacred oracle performing a three-card reading for past, present, and future.
-Past card: "${cards[0].name}" (${cards[0].description}).
-Present card: "${cards[1].name}" (${cards[1].description}).
-Future card: "${cards[2].name}" (${cards[2].description}).
-Please interpret the combination of these three cards and generate deep, insightful messages for each card according to its position (past, present, future). The three messages should interconnect and form a cohesive narrative. Use a gentle yet powerful tone as if the goddess is speaking directly. Format each message with appropriate line breaks for readability.`;
+    return `You are a sacred oracle performing a three-card reading for past, present, and future in Doreen Virtue's style.
+
+Past card: "${cards[0].name}" - ${cards[0].theme} (${cards[0].origin}).
+Present card: "${cards[1].name}" - ${cards[1].theme} (${cards[1].origin}).
+Future card: "${cards[2].name}" - ${cards[2].theme} (${cards[2].origin}).
+
+Create three interconnected messages that form a cohesive spiritual narrative:
+- Each message should focus on its card's specific theme
+- Include the element energies naturally: ${cards.map(c => c.element).join(', ')}
+- Tone: loving, encouraging, gentle guidance
+- Messages should flow together as one story of growth
+- Include practical guidance within each message
+- Length: Each message 80-120 words
+
+Format as JSON with past, present, future keys.`;
   }
-  return `あなたは神聖な神託です。過去、現在、未来を占う3枚引きのリーディングを行います。
-過去のカードは「${cards[0].name}」（${cards[0].description}）。
-現在のカードは「${cards[1].name}」（${cards[1].description}）。
-未来のカードは「${cards[2].name}」（${cards[2].description}）。
-これら3枚のカードの組み合わせを解釈し、それぞれのカードについて、その位置（過去、現在、未来）に応じた、深く洞察に満ちたメッセージを生成してください。3つのメッセージは互いに関連し合い、一つの物語のように繋がるようにしてください。女神が直接語りかけるような、優しく力強い口調でお願いします。各メッセージは、読みやすくなるように適度に改行を入れてください。`;
+  return `あなたは神聖な神託です。Doreen Virtue風の過去、現在、未来を占う3枚引きのリーディングを行います。
+
+過去のカード：「${cards[0].name}」- ${cards[0].theme}（${cards[0].origin}）
+現在のカード：「${cards[1].name}」- ${cards[1].theme}（${cards[1].origin}）
+未来のカード：「${cards[2].name}」- ${cards[2].theme}（${cards[2].origin}）
+
+一つの霊的な成長物語として繋がる3つのメッセージを作成してください：
+- 各メッセージはそのカードの特別なテーマに焦点を当てる
+- エレメントエネルギーを自然に含める：${cards.map(c => c.element).join('、')}
+- トーン：愛に満ちた、励まし、優しいガイダンス
+- メッセージは成長の一つの物語として流れるように
+- 実践的なガイダンスを各メッセージに含める
+- 長さ：各メッセージ80-120文字
+
+past、present、futureキーでJSONフォーマットで回答してください。`;
 };
 
 const threeCardResponseSchema = {
