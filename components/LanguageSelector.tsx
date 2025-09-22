@@ -60,7 +60,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-full bg-white rounded-lg shadow-lg border border-orange-200 z-50 overflow-hidden">
+        <div className="absolute top-full right-0 mt-1 w-full bg-white rounded-lg shadow-lg border border-orange-200 z-50 overflow-hidden">
           {languages.map((language) => (
             <button
               key={language.code}

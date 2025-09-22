@@ -141,33 +141,65 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-violet-50 text-slate-800 p-4 sm:p-8 overflow-hidden">
-      <header className="text-center mb-4 animate-fadeIn relative">
+      <header className="text-center mb-4 animate-fadeIn">
+        {/* Mobile layout: Controls above logo */}
+        <div className="flex justify-center mb-4 sm:hidden">
+          <div className="flex items-center space-x-2">
+            <LanguageSelector
+              currentLanguage={language}
+              onLanguageChange={handleLanguageChange}
+            />
+            <button
+              onClick={() => setIsManualOpen(true)}
+              className="p-2 rounded-full text-amber-700/80 hover:bg-amber-200/50 transition-colors"
+              aria-label={t.manual}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setIsJournalOpen(true)}
+              className="p-2 rounded-full text-amber-700/80 hover:bg-amber-200/50 transition-colors"
+              aria-label="リーディング履歴を開く"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Desktop layout: Controls positioned absolutely */}
+        <div className="relative hidden sm:block">
+          <div className="absolute top-0 right-0 h-full flex items-center space-x-2">
+            <LanguageSelector
+              currentLanguage={language}
+              onLanguageChange={handleLanguageChange}
+            />
+            <button
+              onClick={() => setIsManualOpen(true)}
+              className="p-2 rounded-full text-amber-700/80 hover:bg-amber-200/50 transition-colors"
+              aria-label={t.manual}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setIsJournalOpen(true)}
+              className="p-2 rounded-full text-amber-700/80 hover:bg-amber-200/50 transition-colors"
+              aria-label="リーディング履歴を開く"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
         <img src="/logo.png" alt="女神のオラクル ロゴ" className="mx-auto mb-4" style={{width: '180px', height: '180px'}} />
         <h1 className="text-4xl sm:text-6xl font-bold text-orange-900/90 tracking-wider">{t.appTitle}</h1>
-        <div className="absolute top-0 right-0 h-full flex items-center space-x-1 sm:space-x-2">
-          <LanguageSelector
-            currentLanguage={language}
-            onLanguageChange={handleLanguageChange}
-          />
-          <button
-            onClick={() => setIsManualOpen(true)}
-            className="p-2 rounded-full text-amber-700/80 hover:bg-amber-200/50 transition-colors"
-            aria-label={t.manual}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-7 sm:w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </button>
-          <button
-            onClick={() => setIsJournalOpen(true)}
-            className="p-2 rounded-full text-amber-700/80 hover:bg-amber-200/50 transition-colors"
-            aria-label="リーディング履歴を開く"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-7 sm:w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-            </svg>
-          </button>
-        </div>
       </header>
 
       <div className="flex justify-center items-center mt-6 mb-2 space-x-2 sm:space-x-4 bg-amber-200/50 p-1 rounded-full w-fit mx-auto shadow-inner">
