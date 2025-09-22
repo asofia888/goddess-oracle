@@ -7,7 +7,6 @@ import MessageModal from './components/MessageModal';
 import JournalModal from './components/JournalModal';
 import DisclaimerModal from './components/DisclaimerModal';
 import ManualModal from './components/ManualModal';
-import CardDetailView from './components/CardDetailView';
 import { getReadings, clearReadings } from './utils/storage';
 import { detectLanguage, getTranslation, type Language } from './utils/i18n';
 
@@ -37,8 +36,6 @@ const App: React.FC = () => {
   const [randomStyles, setRandomStyles] = useState<React.CSSProperties[]>([]);
   const [language, setLanguage] = useState<Language>('en');
   const [t, setT] = useState(getTranslation('en'));
-  const [selectedCardForDetail, setSelectedCardForDetail] = useState<GoddessCardData | null>(null);
-  const [isCardDetailOpen, setIsCardDetailOpen] = useState(false);
 
 
   const shuffleAndSetCards = useCallback(() => {
@@ -95,18 +92,6 @@ const App: React.FC = () => {
         setSelectedCards(prev => [...prev, card]);
       }
     }
-  };
-
-  const handleCardDetailView = (card: GoddessCardData) => {
-    if (isAnimating || isModalOpen) return;
-
-    setSelectedCardForDetail(card);
-    setIsCardDetailOpen(true);
-  };
-
-  const handleCloseCardDetail = () => {
-    setIsCardDetailOpen(false);
-    setSelectedCardForDetail(null);
   };
 
   const handleReset = () => {
@@ -241,7 +226,6 @@ const App: React.FC = () => {
               >
                 <OracleCard
                   onClick={() => handleCardSelect(card)}
-                  onDoubleClick={() => handleCardDetailView(card)}
                   isSelected={!!selectedCards.find(c => c.id === card.id)}
                 />
               </div>
@@ -254,13 +238,6 @@ const App: React.FC = () => {
       <JournalModal readings={readings} isOpen={isJournalOpen} onClose={() => setIsJournalOpen(false)} onClear={handleClearHistory} />
       <DisclaimerModal isOpen={isDisclaimerOpen} onClose={() => setIsDisclaimerOpen(false)} />
       <ManualModal isOpen={isManualOpen} onClose={() => setIsManualOpen(false)} />
-      {selectedCardForDetail && (
-        <CardDetailView
-          card={selectedCardForDetail}
-          isOpen={isCardDetailOpen}
-          onClose={handleCloseCardDetail}
-        />
-      )}
 
 
       <footer className="text-center mt-12 text-amber-800/80 text-sm">

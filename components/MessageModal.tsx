@@ -69,20 +69,47 @@ const SingleCardView: React.FC<{ card: GoddessCardData; isMessageLoading: boolea
         <div className="text-amber-700/50 p-4 text-center text-sm">画像の表示に失敗しました。</div>
       )}
     </div>
-    
+
     <h2 className="text-4xl sm:text-5xl font-bold text-orange-800 tracking-wide">{card.name}</h2>
     <p className="text-md sm:text-lg text-amber-700 mt-2 italic">
       {card.description}
     </p>
+
+    <div className="bg-amber-50/50 p-3 rounded-lg border border-amber-200/50 mt-4 mb-4">
+      <h3 className="text-lg font-semibold text-orange-800 mb-1">テーマ</h3>
+      <p className="text-md text-stone-700 font-medium">{card.theme}</p>
+    </div>
+
     {isMessageLoading ? (
         <div className="min-h-[6rem] flex items-center justify-center">
             <LoadingSpinner text="女神からのメッセージを受け取っています..." />
         </div>
     ) : (
-        <p className="text-base text-stone-700 mt-6 leading-relaxed min-h-[6rem] whitespace-pre-wrap text-left">
+        <p className="text-base text-stone-700 mt-6 leading-relaxed min-h-[6rem] whitespace-pre-wrap text-left mb-6">
             {generatedMessage || card.message}
         </p>
     )}
+
+    <div className="space-y-4">
+      <div className="bg-yellow-50/50 p-3 rounded-lg border border-yellow-200/50">
+        <h3 className="text-lg font-semibold text-yellow-800 mb-2">アファメーション</h3>
+        <p className="text-base text-stone-700 italic leading-relaxed">
+          "{card.affirmation}"
+        </p>
+      </div>
+
+      <div className="bg-teal-50/50 p-3 rounded-lg border border-teal-200/50">
+        <h3 className="text-lg font-semibold text-teal-800 mb-2">日常のガイダンス</h3>
+        <ul className="space-y-1 text-left">
+          {card.dailyGuidance.map((guidance, index) => (
+            <li key={index} className="text-sm text-stone-700 flex items-start">
+              <span className="text-teal-600 mr-2">•</span>
+              {guidance}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
   </div>
 );
 
@@ -97,12 +124,39 @@ const ThreeCardSpread: React.FC<{ cards: GoddessCardData[]; isLoading: boolean; 
           </h3>
           <h4 className="text-2xl font-semibold text-orange-800 text-center">{card.name}</h4>
           <p className="text-sm text-amber-700 mt-1 italic text-center">{card.description}</p>
-          <div className="flex-grow mt-4">
+
+          <div className="bg-amber-50/80 p-2 rounded-md border border-amber-200/50 mt-3 mb-3">
+            <h5 className="text-sm font-semibold text-orange-700 mb-1 text-center">テーマ</h5>
+            <p className="text-sm text-stone-700 font-medium text-center">{card.theme}</p>
+          </div>
+
+          <div className="flex-grow">
             {isLoading ? (
                 <LoadingSpinner text="メッセージを生成中..." />
             ) : (
-                 <p className="text-base text-stone-700 leading-relaxed font-light whitespace-pre-wrap text-left">{generatedMessages[index] || card.message}</p>
+                 <p className="text-base text-stone-700 leading-relaxed font-light whitespace-pre-wrap text-left mb-4">{generatedMessages[index] || card.message}</p>
             )}
+          </div>
+
+          <div className="space-y-3 mt-auto">
+            <div className="bg-yellow-50/80 p-2 rounded-md border border-yellow-200/50">
+              <h5 className="text-sm font-semibold text-yellow-700 mb-1">アファメーション</h5>
+              <p className="text-xs text-stone-600 italic leading-relaxed">
+                "{card.affirmation}"
+              </p>
+            </div>
+
+            <div className="bg-teal-50/80 p-2 rounded-md border border-teal-200/50">
+              <h5 className="text-sm font-semibold text-teal-700 mb-1">日常のガイダンス</h5>
+              <ul className="space-y-1">
+                {card.dailyGuidance.map((guidance, guidanceIndex) => (
+                  <li key={guidanceIndex} className="text-xs text-stone-600 flex items-start">
+                    <span className="text-teal-500 mr-1">•</span>
+                    {guidance}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       ))}
