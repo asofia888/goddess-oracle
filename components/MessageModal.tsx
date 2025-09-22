@@ -134,29 +134,8 @@ const ThreeCardSpread: React.FC<{ cards: GoddessCardData[]; isLoading: boolean; 
             {isLoading ? (
                 <LoadingSpinner text="メッセージを生成中..." />
             ) : (
-                 <p className="text-base text-stone-700 leading-relaxed font-light whitespace-pre-wrap text-left mb-4">{generatedMessages[index] || card.message}</p>
+                 <p className="text-base text-stone-700 leading-relaxed font-light whitespace-pre-wrap text-left">{generatedMessages[index] || card.message}</p>
             )}
-          </div>
-
-          <div className="space-y-3 mt-auto">
-            <div className="bg-yellow-50/80 p-2 rounded-md border border-yellow-200/50">
-              <h5 className="text-sm font-semibold text-yellow-700 mb-1">アファメーション</h5>
-              <p className="text-xs text-stone-600 italic leading-relaxed">
-                "{card.affirmation}"
-              </p>
-            </div>
-
-            <div className="bg-teal-50/80 p-2 rounded-md border border-teal-200/50">
-              <h5 className="text-sm font-semibold text-teal-700 mb-1">日常のガイダンス</h5>
-              <ul className="space-y-1">
-                {card.dailyGuidance.map((guidance, guidanceIndex) => (
-                  <li key={guidanceIndex} className="text-xs text-stone-600 flex items-start">
-                    <span className="text-teal-500 mr-1">•</span>
-                    {guidance}
-                  </li>
-                ))}
-              </ul>
-            </div>
           </div>
         </div>
       ))}
