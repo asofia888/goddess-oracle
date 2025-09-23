@@ -129,6 +129,23 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Retry logic with exponential backoff
+  const retryWithBackoff = async <T,>(fn: () => Promise<T>, maxRetries: number = 3): Promise<T | null> => {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        return await fn();
+      } catch (error) {
+        console.warn(`Attempt ${attempt + 1} failed:`, error);
+        if (attempt === maxRetries - 1) {
+          throw error;
+        }
+        // Exponential backoff: 1s, 2s, 4s
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+      }
+    }
+    return null;
+  };
+
   const generateAllContent = useCallback(async () => {
     if (!isOpen || cards.length === 0) return;
 
@@ -140,87 +157,114 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
     const mode = cards.length === 1 ? 'single' : 'three';
     let finalImageUrl: string | null = null;
     let finalMessages: (string | null)[] = [];
+    let hasPartialFailure = false;
 
     try {
       if (mode === 'single') {
         setIsImageLoading(true);
-        
-        const imagePromise = (async () => {
-          try {
-            const imagePrompt = `「${cards[0].name}」（${cards[0].description}）の、神々しく美しい芸術的な肖像画。幻想的で優美な雰囲気で。`;
-            const response = await ai.models.generateImages({
-              model: 'imagen-4.0-generate-001',
-              prompt: imagePrompt,
-              config: {
-                numberOfImages: 1,
-                outputMimeType: 'image/jpeg',
-                aspectRatio: '3:4',
-              },
-            });
-            if (!response.generatedImages || response.generatedImages.length === 0 || !response.generatedImages[0].image) {
-              console.error('Image generation failed: No image data in response.', response);
-              setGeneratedImageUrl(null);
-              return null;
-            }
-            const base64ImageBytes: string = response.generatedImages[0].image.imageBytes;
-            const imageUrl = `data:image/jpeg;base64,${base64ImageBytes}`;
-            setGeneratedImageUrl(imageUrl);
-            return imageUrl;
-          } catch (err) {
-            console.error('Image generation error:', err);
-            setGeneratedImageUrl(null); // Ensure failed state is visible
-            return null; // Don't block on image failure
-          } finally {
-            setIsImageLoading(false);
-          }
-        })();
 
-        const messagePromise = (async () => {
-          try {
-            const prompt = generateSingleCardMessagePrompt(cards[0], readingLevel);
-            const response = await ai.models.generateContent({
-              model: 'gemini-2.5-flash',
-              contents: prompt,
-            });
-            const message = response.text;
-            setGeneratedMessages([message]);
-            return [message];
-          } catch (err) {
-            console.error('Message generation error:', err);
-            const fallbackMessage = [cards[0].message];
-            setGeneratedMessages(fallbackMessage);
-            return fallbackMessage;
+        const imagePromise = retryWithBackoff(async () => {
+          const imagePrompt = `「${cards[0].name}」（${cards[0].description}）の、神々しく美しい芸術的な肖像画。幻想的で優美な雰囲気で。`;
+          const response = await ai.models.generateImages({
+            model: 'imagen-4.0-generate-001',
+            prompt: imagePrompt,
+            config: {
+              numberOfImages: 1,
+              outputMimeType: 'image/jpeg',
+              aspectRatio: '3:4',
+            },
+          });
+          if (!response.generatedImages || response.generatedImages.length === 0 || !response.generatedImages[0].image) {
+            throw new Error('No image data in response');
           }
-        })();
+          const base64ImageBytes: string = response.generatedImages[0].image.imageBytes;
+          return `data:image/jpeg;base64,${base64ImageBytes}`;
+        }).then(imageUrl => {
+          setGeneratedImageUrl(imageUrl);
+          return imageUrl;
+        }).catch(err => {
+          console.error('Image generation failed after retries:', err);
+          setGeneratedImageUrl(null);
+          hasPartialFailure = true;
+          return null;
+        }).finally(() => {
+          setIsImageLoading(false);
+        });
+
+        const messagePromise = retryWithBackoff(async () => {
+          const prompt = generateSingleCardMessagePrompt(cards[0], readingLevel);
+          const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+          });
+          if (!response.text || response.text.trim() === '') {
+            throw new Error('Empty message response');
+          }
+          return response.text;
+        }).then(message => {
+          const messages = [message];
+          setGeneratedMessages(messages);
+          return messages;
+        }).catch(err => {
+          console.error('Message generation failed after retries:', err);
+          const fallbackMessage = [cards[0].message];
+          setGeneratedMessages(fallbackMessage);
+          hasPartialFailure = true;
+          return fallbackMessage;
+        });
 
         const [imageUrl, messages] = await Promise.all([imagePromise, messagePromise]);
         finalImageUrl = imageUrl;
-        finalMessages = messages;
+        finalMessages = messages || [cards[0].message];
 
       } else { // mode === 'three'
-        const prompt = generateThreeCardSpreadMessagePrompt(cards, readingLevel);
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: prompt,
-          config: {
-            responseMimeType: "application/json",
-            responseSchema: threeCardResponseSchema,
-          },
+        finalMessages = await retryWithBackoff(async () => {
+          const prompt = generateThreeCardSpreadMessagePrompt(cards, readingLevel);
+          const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+              responseMimeType: "application/json",
+              responseSchema: threeCardResponseSchema,
+            },
+          });
+
+          if (!response.text || response.text.trim() === '') {
+            throw new Error('Empty response from AI');
+          }
+
+          const jsonResponse = JSON.parse(response.text);
+          if (!jsonResponse.past || !jsonResponse.present || !jsonResponse.future) {
+            throw new Error('Incomplete three-card response');
+          }
+
+          return [jsonResponse.past, jsonResponse.present, jsonResponse.future];
+        }).then(messages => {
+          setGeneratedMessages(messages!);
+          return messages!;
+        }).catch(err => {
+          console.error('Three-card generation failed after retries:', err);
+          const fallbackMessages = cards.map(c => c.message);
+          setGeneratedMessages(fallbackMessages);
+          hasPartialFailure = true;
+          return fallbackMessages;
         });
-        const jsonResponse = JSON.parse(response.text);
-        const messages = [jsonResponse.past, jsonResponse.present, jsonResponse.future];
-        setGeneratedMessages(messages);
-        finalMessages = messages;
       }
+
+      if (hasPartialFailure) {
+        setError("一部のコンテンツの生成に失敗しました。元のメッセージを表示しています。");
+      }
+
     } catch (e: any) {
       console.error("Failed to generate content:", e);
       setError("コンテンツの生成に失敗しました。ネットワーク接続を確認し、もう一度お試しください。");
-      finalMessages = cards.map(c => c.message); // Fallback to original messages
+      finalMessages = cards.map(c => c.message);
       setGeneratedMessages(finalMessages);
     } finally {
       setIsMessageLoading(false);
     }
-    
+
+    // Save reading even if there were partial failures
     const newReading: NewReading = {
       mode,
       cards,
@@ -228,7 +272,11 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
       generatedImageUrl: finalImageUrl,
       readingLevel,
     };
-    saveReading(newReading);
+
+    const saveSuccess = saveReading(newReading);
+    if (!saveSuccess) {
+      console.warn('Failed to save reading to localStorage');
+    }
   }, [isOpen, cards, readingLevel]);
   
 

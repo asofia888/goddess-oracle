@@ -47,7 +47,15 @@ const App: React.FC = () => {
     setLanguage(detectedLang);
     setT(getTranslation(detectedLang));
     setCards(shuffleArray(GODDESS_CARDS));
-    setReadings(getReadings());
+
+    // Load readings with error handling
+    try {
+      const initialReadings = getReadings();
+      setReadings(initialReadings);
+    } catch (error) {
+      console.error('Error loading initial readings:', error);
+      setReadings([]); // Fallback to empty array
+    }
   }, []);
 
   const handleLanguageChange = (newLanguage: Language) => {
@@ -95,7 +103,14 @@ const App: React.FC = () => {
 
   const handleReset = () => {
     setIsModalOpen(false);
-    setReadings(getReadings()); // Refresh readings from storage
+    // Refresh readings from storage with error handling
+    try {
+      const freshReadings = getReadings();
+      setReadings(freshReadings);
+    } catch (error) {
+      console.error('Error refreshing readings:', error);
+      // Keep existing readings if refresh fails
+    }
     setTimeout(() => {
       performAnimatedShuffle();
     }, 300); // Wait for modal animation
