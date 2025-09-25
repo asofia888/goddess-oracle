@@ -16,6 +16,7 @@ interface MessageModalProps {
   readingLevel: ReadingLevel;
   language: Language;
   t: Translations;
+  onSave?: () => void;
 }
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -122,12 +123,13 @@ const ThreeCardSpread: React.FC<{ cards: GoddessCardData[]; isLoading: boolean; 
 );
 
 
-const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, readingLevel, language, t }) => {
+const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, readingLevel, language, t, onSave }) => {
   const [generatedMessages, setGeneratedMessages] = useState<(string | null)[]>([]);
   const [isMessageLoading, setIsMessageLoading] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
 
   // Retry logic with exponential backoff
   const retryWithBackoff = async <T,>(fn: () => Promise<T>, maxRetries: number = 3): Promise<T | null> => {
@@ -263,25 +265,33 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
     } finally {
       setIsMessageLoading(false);
     }
+  }, [isOpen, cards, readingLevel]);
 
-    // Save reading even if there were partial failures
+  const handleSaveReading = useCallback(() => {
+    if (cards.length === 0) return;
+
+    const mode = cards.length === 1 ? 'single' : 'three';
     const newReading: NewReading = {
       mode,
       cards,
-      generatedMessages: finalMessages,
-      generatedImageUrl: finalImageUrl,
+      generatedMessages: generatedMessages.length > 0 ? generatedMessages : cards.map(c => c.message),
+      generatedImageUrl: generatedImageUrl,
       readingLevel,
     };
 
     const saveSuccess = saveReading(newReading);
-    if (!saveSuccess) {
+    if (saveSuccess) {
+      setIsSaved(true);
+      onSave?.(); // Notify parent component
+    } else {
       console.warn('Failed to save reading to localStorage');
     }
-  }, [isOpen, cards, readingLevel]);
+  }, [cards, generatedMessages, generatedImageUrl, readingLevel, onSave]);
   
 
   useEffect(() => {
     if (isOpen && cards.length > 0) {
+      setIsSaved(false); // Reset saved state when modal opens
       generateAllContent();
     }
   }, [isOpen, cards, generateAllContent]);
@@ -317,13 +327,39 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
         </div>
       )}
 
-      <button
-        onClick={onClose}
-        className="mt-8 bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-6 rounded-full shadow-md transition-transform transform hover:scale-105"
-        aria-label="モーダルを閉じてカードを引き直す"
-      >
-        もう一度引く
-      </button>
+      <div className="flex flex-col sm:flex-row gap-3 mt-8">
+        <button
+          onClick={handleSaveReading}
+          disabled={isSaved}
+          className={`${isSaved
+            ? 'bg-green-600 text-white cursor-default'
+            : 'bg-purple-600 hover:bg-purple-500 text-white hover:scale-105'
+          } font-bold py-2 px-6 rounded-full shadow-md transition-all transform`}
+          aria-label={isSaved ? t.saved : t.saveReading}
+        >
+          {isSaved ? (
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              {t.saved}
+            </div>
+          ) : (
+            t.save
+          )}
+        </button>
+
+        <button
+          onClick={onClose}
+          className="bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-6 rounded-full shadow-md transition-transform transform hover:scale-105"
+          aria-label="モーダルを閉じてカードを引き直す"
+        >
+          {language === 'ja' ? 'もう一度引く' :
+           language === 'es' ? 'Tirar de Nuevo' :
+           language === 'fr' ? 'Tirer à Nouveau' :
+           'Draw Again'}
+        </button>
+      </div>
 
       <style>{`
         @keyframes fadeIn {

@@ -103,6 +103,12 @@ const App: React.FC = () => {
 
   const handleReset = () => {
     setIsModalOpen(false);
+    setTimeout(() => {
+      performAnimatedShuffle();
+    }, 300); // Wait for modal animation
+  };
+
+  const handleSaveReading = () => {
     // Refresh readings from storage with error handling
     try {
       const freshReadings = getReadings();
@@ -111,9 +117,6 @@ const App: React.FC = () => {
       console.error('Error refreshing readings:', error);
       // Keep existing readings if refresh fails
     }
-    setTimeout(() => {
-      performAnimatedShuffle();
-    }, 300); // Wait for modal animation
   };
   
   const handleModeChange = (mode: ReadingMode) => {
@@ -299,7 +302,7 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      <MessageModal cards={selectedCards} isOpen={isModalOpen} onClose={handleReset} readingLevel={readingLevel} language={language} t={t} />
+      <MessageModal cards={selectedCards} isOpen={isModalOpen} onClose={handleReset} readingLevel={readingLevel} language={language} t={t} onSave={handleSaveReading} />
       <JournalModal readings={readings} isOpen={isJournalOpen} onClose={() => setIsJournalOpen(false)} onClear={handleClearHistory} />
       <DisclaimerModal isOpen={isDisclaimerOpen} onClose={() => setIsDisclaimerOpen(false)} />
       <ManualModal isOpen={isManualOpen} onClose={() => setIsManualOpen(false)} />

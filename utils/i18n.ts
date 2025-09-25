@@ -26,6 +26,9 @@ export interface Translations {
   theme: string;
   affirmation: string;
   dailyGuidance: string;
+  save: string;
+  saved: string;
+  saveReading: string;
   manualContent: {
     title: string;
     singleCardTitle: string;
@@ -64,6 +67,9 @@ export const translations: Record<Language, Translations> = {
     theme: 'テーマ',
     affirmation: 'アファメーション',
     dailyGuidance: '日常のガイダンス',
+    save: '保存',
+    saved: '保存済み',
+    saveReading: 'リーディングを保存',
     manualContent: {
       title: '女神のオラクルガイダンス 使い方',
       singleCardTitle: '1枚引き',
@@ -100,6 +106,9 @@ export const translations: Record<Language, Translations> = {
     theme: 'Theme',
     affirmation: 'Affirmation',
     dailyGuidance: 'Daily Guidance',
+    save: 'Save',
+    saved: 'Saved',
+    saveReading: 'Save Reading',
     manualContent: {
       title: 'Goddess Oracle Guidance - How to Use',
       singleCardTitle: 'Single Card Reading',
@@ -136,6 +145,9 @@ export const translations: Record<Language, Translations> = {
     theme: 'Tema',
     affirmation: 'Afirmación',
     dailyGuidance: 'Guía Diaria',
+    save: 'Guardar',
+    saved: 'Guardado',
+    saveReading: 'Guardar Lectura',
     manualContent: {
       title: 'Guía del Oráculo de la Diosa - Cómo Usar',
       singleCardTitle: 'Lectura de Una Carta',
@@ -172,6 +184,9 @@ export const translations: Record<Language, Translations> = {
     theme: 'Thème',
     affirmation: 'Affirmation',
     dailyGuidance: 'Guidance Quotidienne',
+    save: 'Enregistrer',
+    saved: 'Enregistré',
+    saveReading: 'Enregistrer la Lecture',
     manualContent: {
       title: 'Guide de l\'Oracle de la Déesse - Mode d\'emploi',
       singleCardTitle: 'Lecture d\'Une Carte',
