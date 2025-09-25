@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import type { GoddessCardData, SavedReading, ReadingLevel, ReadingMode, Language } from './types';
 import OracleCard from './components/OracleCard';
 import LanguageSelector from './components/LanguageSelector';
+import ErrorBoundary from './components/shared/ErrorBoundary';
 import { getReadings, clearReadings } from './utils/storage';
 import { detectLanguage, getTranslation } from './utils/i18n';
 
@@ -181,6 +182,7 @@ const App: React.FC = () => {
   };
 
   return (
+    <ErrorBoundary language={language}>
     <div className="min-h-screen bg-violet-50 text-slate-800 p-4 sm:p-8 overflow-hidden">
       <header className="text-center mb-4 animate-fadeIn">
         {/* Mobile layout: Controls above logo */}
@@ -403,6 +405,7 @@ const App: React.FC = () => {
         }
       `}</style>
     </div>
+    </ErrorBoundary>
   );
 };
 

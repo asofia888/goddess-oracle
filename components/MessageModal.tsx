@@ -3,8 +3,10 @@ import { GoogleGenAI, Type } from "@google/genai";
 import type { GoddessCardData, NewReading, ReadingLevel } from '../types';
 import { saveReading } from '../utils/storage';
 import type { Language, Translations } from '../utils/i18n';
+import { retryWithExponentialBackoff, parseAPIError, type APIError } from '../utils/errorHandling';
 import Modal from './shared/Modal';
 import LoadingSpinner from './shared/LoadingSpinner';
+import ErrorMessage from './shared/ErrorMessage';
 import CardTheme from './ui/CardTheme';
 import CardAffirmation from './ui/CardAffirmation';
 import CardGuidance from './ui/CardGuidance';
@@ -24,7 +26,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 const generateSingleCardMessagePrompt = (card: GoddessCardData, level: ReadingLevel) => {
   const basePrompt = `あなたは神聖な神託です。女神「${card.name}」（${card.description}）からのメッセージを伝えてください。元のメッセージは「${card.message}」です。この情報に基づき、より深く、洞察に満ちた、パーソナライズされた神託のメッセージを生成してください。口調は、女神が直接語りかけるように、優雅で、共感的で、包み込むような女性的なものにしてください。「～しなさい」や「～だろう」のような強い命令形や断定的な表現は避け、「～すると良いでしょう」「～かもしれません」「～でしょう」のように、柔らかく、受け入れやすい言葉遣いを徹底してください。`;
   const deepInsightPrompt = `さらに、このカードが示す潜在的な課題や、あなたが乗り越えるべきテーマについても深く言及してください。魂の成長を促すための、具体的で実践的なアドバイスを加えてください。`;
-  const finalPrompt = level === 'deep' 
+  const finalPrompt = level === 'deep'
     ? `${basePrompt} ${deepInsightPrompt} メッセージは全体で600文字以内とし、適度に改行を入れて読みやすくしてください。`
     : `${basePrompt} メッセージは550文字以内とし、適度に改行を入れて読みやすくしてください。`;
   return finalPrompt;
@@ -53,13 +55,32 @@ const threeCardResponseSchema = {
     required: ["past", "present", "future"],
 };
 
-
-
-const SingleCardView: React.FC<{ card: GoddessCardData; isMessageLoading: boolean; isImageLoading: boolean; generatedMessage: string | null; generatedImageUrl: string | null; t: Translations; }> = ({ card, isMessageLoading, isImageLoading, generatedMessage, generatedImageUrl, t }) => (
+const SingleCardView: React.FC<{
+  card: GoddessCardData;
+  isMessageLoading: boolean;
+  isImageLoading: boolean;
+  generatedMessage: string | null;
+  generatedImageUrl: string | null;
+  messageError: APIError | null;
+  imageError: APIError | null;
+  onRetryMessage: () => void;
+  onRetryImage: () => void;
+  t: Translations;
+  language: Language;
+}> = ({ card, isMessageLoading, isImageLoading, generatedMessage, generatedImageUrl, messageError, imageError, onRetryMessage, onRetryImage, t, language }) => (
   <div className="text-center w-full">
     <div className="w-full max-w-xs mx-auto aspect-[3/4] bg-amber-100 rounded-lg mb-6 flex items-center justify-center border border-amber-200/50 shadow-inner overflow-hidden">
       {isImageLoading ? (
         <LoadingSpinner text="女神の姿を顕現中..." />
+      ) : imageError ? (
+        <div className="p-4 w-full">
+          <ErrorMessage
+            error={imageError}
+            language={language}
+            onRetry={onRetryImage}
+            className="text-xs"
+          />
+        </div>
       ) : generatedImageUrl ? (
         <img src={generatedImageUrl} alt={`An artistic depiction of ${card.name}`} className="w-full h-full object-cover rounded-lg animate-fadeIn" />
       ) : (
@@ -76,300 +97,327 @@ const SingleCardView: React.FC<{ card: GoddessCardData; isMessageLoading: boolea
       <CardTheme theme={card.theme} label={t.theme} />
     </div>
 
-    {isMessageLoading ? (
-        <div className="min-h-[6rem] flex items-center justify-center">
-            <LoadingSpinner text="女神からのメッセージを受け取っています..." />
-        </div>
-    ) : (
-        <p className="text-base text-stone-700 mt-6 leading-relaxed min-h-[6rem] whitespace-pre-wrap text-left mb-6">
-            {generatedMessage || card.message}
-        </p>
+    {messageError && (
+      <div className="mb-4">
+        <ErrorMessage
+          error={messageError}
+          language={language}
+          onRetry={onRetryMessage}
+        />
+      </div>
     )}
 
-    <div className="space-y-4">
+    {isMessageLoading ? (
+        <div className="min-h-[6rem] flex items-center justify-center">
+          <LoadingSpinner text="女神からのメッセージを受信中..." />
+        </div>
+      ) : generatedMessage ? (
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-xl border border-amber-200/50 shadow-inner max-w-2xl mx-auto my-4">
+          <p className="text-slate-700 leading-relaxed whitespace-pre-line text-sm sm:text-base font-medium">
+            {generatedMessage}
+          </p>
+        </div>
+      ) : null
+    }
+
+    <div className="mt-6 mb-4">
       <CardAffirmation affirmation={card.affirmation} label={t.affirmation} />
+    </div>
+
+    <div className="mt-4">
       <CardGuidance guidance={card.dailyGuidance} label={t.dailyGuidance} />
     </div>
   </div>
 );
 
-const ThreeCardSpread: React.FC<{ cards: GoddessCardData[]; isLoading: boolean; generatedMessages: (string | null)[]; t: Translations; }> = ({ cards, isLoading, generatedMessages, t }) => (
-  <div className="flex flex-col items-center w-full">
-    <h2 className="text-4xl sm:text-5xl font-bold text-orange-800 tracking-wide mb-6">あなたのリーディング</h2>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 text-left w-full">
-      {cards.map((card, index) => (
-        <div key={card.id} className="flex flex-col bg-amber-50/50 p-4 rounded-lg border border-amber-200/50">
-          <h3 className="text-xl font-bold text-amber-800 tracking-wide text-center mb-1">
-            {['過去', '現在', '未来'][index]}
-          </h3>
-          <h4 className="text-2xl font-semibold text-orange-800 text-center">{card.name}</h4>
-          <p className="text-sm text-amber-700 mt-1 italic text-center">{card.description}</p>
-
-          <div className="mt-3 mb-3">
-            <CardTheme theme={card.theme} size="sm" label={t.theme} />
-          </div>
-
-          <div className="flex-grow">
-            {isLoading ? (
-                <LoadingSpinner text="メッセージを生成中..." />
-            ) : (
-                 <p className="text-base text-stone-700 leading-relaxed font-light whitespace-pre-wrap text-left">{generatedMessages[index] || card.message}</p>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-
 const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, readingLevel, language, t, onSave }) => {
   const [generatedMessages, setGeneratedMessages] = useState<(string | null)[]>([]);
   const [isMessageLoading, setIsMessageLoading] = useState(false);
+  const [messageError, setMessageError] = useState<APIError | null>(null);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [isImageLoading, setIsImageLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<APIError | null>(null);
   const [isSaved, setIsSaved] = useState(false);
 
-  // Retry logic with exponential backoff
-  const retryWithBackoff = async <T,>(fn: () => Promise<T>, maxRetries: number = 3): Promise<T | null> => {
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      try {
-        return await fn();
-      } catch (error) {
-        console.warn(`Attempt ${attempt + 1} failed:`, error);
-        if (attempt === maxRetries - 1) {
-          throw error;
-        }
-        // Exponential backoff: 1s, 2s, 4s
-        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+  // Helper functions for content generation
+  const generateMessages = async (): Promise<(string | null)[]> => {
+    const mode = cards.length === 1 ? 'single' : 'three';
+
+    return await retryWithExponentialBackoff(async () => {
+      if (mode === 'single') {
+        const prompt = generateSingleCardMessagePrompt(cards[0], readingLevel);
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: prompt,
+        });
+        return [response.text];
+      } else {
+        const prompt = generateThreeCardSpreadMessagePrompt(cards, readingLevel);
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: prompt,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: threeCardResponseSchema,
+          },
+        });
+        const jsonResponse = JSON.parse(response.text);
+        return [jsonResponse.past, jsonResponse.present, jsonResponse.future];
       }
+    });
+  };
+
+  const generateImage = async (card: GoddessCardData): Promise<string | null> => {
+    return await retryWithExponentialBackoff(async () => {
+      const imagePrompt = `「${card.name}」（${card.description}）の、神々しく美しい芸術的な肖像画。幻想的で優美な雰囲気で。`;
+      const response = await ai.models.generateImages({
+        model: 'imagen-4.0-generate-001',
+        prompt: imagePrompt,
+        config: {
+          numberOfImages: 1,
+          outputMimeType: 'image/jpeg',
+          aspectRatio: '3:4',
+        },
+      });
+
+      if (!response.generatedImages || response.generatedImages.length === 0 || !response.generatedImages[0].image) {
+        throw new Error('No image data in response');
+      }
+
+      const base64ImageBytes: string = response.generatedImages[0].image.imageBytes;
+      return `data:image/jpeg;base64,${base64ImageBytes}`;
+    });
+  };
+
+  const getFallbackMessages = (): (string | null)[] => {
+    if (cards.length === 1) {
+      return [cards[0].message];
+    } else {
+      return cards.map(card => card.message);
     }
-    return null;
+  };
+
+  // Retry handlers for user-initiated retries
+  const handleRetryMessages = async () => {
+    setMessageError(null);
+    setIsMessageLoading(true);
+
+    try {
+      const messages = await generateMessages();
+      setGeneratedMessages(messages);
+    } catch (error) {
+      const apiError = parseAPIError(error);
+      setMessageError(apiError);
+      setGeneratedMessages(getFallbackMessages());
+    } finally {
+      setIsMessageLoading(false);
+    }
+  };
+
+  const handleRetryImage = async () => {
+    if (cards.length !== 1) return;
+
+    setImageError(null);
+    setIsImageLoading(true);
+
+    try {
+      const imageUrl = await generateImage(cards[0]);
+      setGeneratedImageUrl(imageUrl);
+    } catch (error) {
+      const apiError = parseAPIError(error);
+      setImageError(apiError);
+    } finally {
+      setIsImageLoading(false);
+    }
   };
 
   const generateAllContent = useCallback(async () => {
     if (!isOpen || cards.length === 0) return;
 
-    setError(null);
+    // Reset all states
+    setMessageError(null);
+    setImageError(null);
     setGeneratedMessages([]);
     setGeneratedImageUrl(null);
     setIsMessageLoading(true);
 
     const mode = cards.length === 1 ? 'single' : 'three';
-    let finalImageUrl: string | null = null;
-    let finalMessages: (string | null)[] = [];
-    let hasPartialFailure = false;
 
     try {
+      // Generate messages first (critical functionality)
+      const messagePromise = generateMessages();
+
+      // Generate image concurrently for single card mode
+      let imagePromise: Promise<string | null> = Promise.resolve(null);
       if (mode === 'single') {
         setIsImageLoading(true);
-
-        const imagePromise = retryWithBackoff(async () => {
-          const imagePrompt = `「${cards[0].name}」（${cards[0].description}）の、神々しく美しい芸術的な肖像画。幻想的で優美な雰囲気で。`;
-          const response = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
-            prompt: imagePrompt,
-            config: {
-              numberOfImages: 1,
-              outputMimeType: 'image/jpeg',
-              aspectRatio: '3:4',
-            },
-          });
-          if (!response.generatedImages || response.generatedImages.length === 0 || !response.generatedImages[0].image) {
-            throw new Error('No image data in response');
-          }
-          const base64ImageBytes: string = response.generatedImages[0].image.imageBytes;
-          return `data:image/jpeg;base64,${base64ImageBytes}`;
-        }).then(imageUrl => {
-          setGeneratedImageUrl(imageUrl);
-          return imageUrl;
-        }).catch(err => {
-          console.error('Image generation failed after retries:', err);
-          setGeneratedImageUrl(null);
-          hasPartialFailure = true;
-          return null;
-        }).finally(() => {
-          setIsImageLoading(false);
-        });
-
-        const messagePromise = retryWithBackoff(async () => {
-          const prompt = generateSingleCardMessagePrompt(cards[0], readingLevel);
-          const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-          });
-          if (!response.text || response.text.trim() === '') {
-            throw new Error('Empty message response');
-          }
-          return response.text;
-        }).then(message => {
-          const messages = [message];
-          setGeneratedMessages(messages);
-          return messages;
-        }).catch(err => {
-          console.error('Message generation failed after retries:', err);
-          const fallbackMessage = [cards[0].message];
-          setGeneratedMessages(fallbackMessage);
-          hasPartialFailure = true;
-          return fallbackMessage;
-        });
-
-        const [imageUrl, messages] = await Promise.all([imagePromise, messagePromise]);
-        finalImageUrl = imageUrl;
-        finalMessages = messages || [cards[0].message];
-
-      } else { // mode === 'three'
-        finalMessages = await retryWithBackoff(async () => {
-          const prompt = generateThreeCardSpreadMessagePrompt(cards, readingLevel);
-          const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-            config: {
-              responseMimeType: "application/json",
-              responseSchema: threeCardResponseSchema,
-            },
-          });
-
-          if (!response.text || response.text.trim() === '') {
-            throw new Error('Empty response from AI');
-          }
-
-          const jsonResponse = JSON.parse(response.text);
-          if (!jsonResponse.past || !jsonResponse.present || !jsonResponse.future) {
-            throw new Error('Incomplete three-card response');
-          }
-
-          return [jsonResponse.past, jsonResponse.present, jsonResponse.future];
-        }).then(messages => {
-          setGeneratedMessages(messages!);
-          return messages!;
-        }).catch(err => {
-          console.error('Three-card generation failed after retries:', err);
-          const fallbackMessages = cards.map(c => c.message);
-          setGeneratedMessages(fallbackMessages);
-          hasPartialFailure = true;
-          return fallbackMessages;
-        });
+        imagePromise = generateImage(cards[0]);
       }
 
-      if (hasPartialFailure) {
-        setError("一部のコンテンツの生成に失敗しました。元のメッセージを表示しています。");
+      // Wait for both operations
+      const [messages, imageUrl] = await Promise.allSettled([messagePromise, imagePromise]);
+
+      // Handle message results
+      if (messages.status === 'fulfilled') {
+        setGeneratedMessages(messages.value);
+      } else {
+        const apiError = parseAPIError(messages.reason);
+        setMessageError(apiError);
+        setGeneratedMessages(getFallbackMessages());
       }
 
-    } catch (e: any) {
-      console.error("Failed to generate content:", e);
-      setError("コンテンツの生成に失敗しました。ネットワーク接続を確認し、もう一度お試しください。");
-      finalMessages = cards.map(c => c.message);
-      setGeneratedMessages(finalMessages);
+      // Handle image results (less critical)
+      if (imageUrl.status === 'fulfilled') {
+        setGeneratedImageUrl(imageUrl.value);
+      } else if (mode === 'single') {
+        const apiError = parseAPIError(imageUrl.reason);
+        setImageError(apiError);
+      }
+
+    } catch (error) {
+      console.error('Unexpected error in generateAllContent:', error);
     } finally {
       setIsMessageLoading(false);
+      setIsImageLoading(false);
     }
-  }, [isOpen, cards, readingLevel]);
-
-  const handleSaveReading = useCallback(() => {
-    if (cards.length === 0) return;
-
-    const mode = cards.length === 1 ? 'single' : 'three';
-    const newReading: NewReading = {
-      mode,
-      cards,
-      generatedMessages: generatedMessages.length > 0 ? generatedMessages : cards.map(c => c.message),
-      generatedImageUrl: generatedImageUrl,
-      readingLevel,
-    };
-
-    const saveSuccess = saveReading(newReading);
-    if (saveSuccess) {
-      setIsSaved(true);
-      onSave?.(); // Notify parent component
-    } else {
-      console.warn('Failed to save reading to localStorage');
-    }
-  }, [cards, generatedMessages, generatedImageUrl, readingLevel, onSave]);
-  
+  }, [cards, readingLevel, isOpen]);
 
   useEffect(() => {
     if (isOpen && cards.length > 0) {
-      setIsSaved(false); // Reset saved state when modal opens
       generateAllContent();
+      setIsSaved(false);
     }
-  }, [isOpen, cards, generateAllContent]);
-  
-  if (!isOpen || cards.length === 0) {
-    return null;
+  }, [generateAllContent, isOpen, cards.length]);
+
+  const handleSaveReading = async () => {
+    try {
+      const newReading: NewReading = {
+        mode: cards.length === 1 ? 'single' : 'three',
+        cards,
+        generatedMessages,
+        generatedImageUrl,
+        readingLevel,
+      };
+
+      await saveReading(newReading);
+      setIsSaved(true);
+      onSave?.();
+
+      setTimeout(() => setIsSaved(false), 3000);
+    } catch (error) {
+      console.error('Failed to save reading:', error);
+    }
+  };
+
+  if (cards.length === 1) {
+    return (
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6 sm:p-8">
+            <SingleCardView
+              card={cards[0]}
+              isMessageLoading={isMessageLoading}
+              isImageLoading={isImageLoading}
+              generatedMessage={generatedMessages[0]}
+              generatedImageUrl={generatedImageUrl}
+              messageError={messageError}
+              imageError={imageError}
+              onRetryMessage={handleRetryMessages}
+              onRetryImage={handleRetryImage}
+              t={t}
+              language={language}
+            />
+
+            <div className="flex justify-center space-x-4 mt-8 pt-6 border-t border-gray-200">
+              <button
+                onClick={handleSaveReading}
+                className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
+                  isSaved
+                    ? 'bg-green-600 text-white'
+                    : 'bg-amber-600 hover:bg-amber-500 text-white'
+                }`}
+              >
+                {isSaved ? t.saved : t.saveReading}
+              </button>
+              <button
+                onClick={onClose}
+                className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-3 rounded-lg font-semibold transition-colors"
+              >
+                {t.close}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Modal>
+    );
   }
 
-  const isSingleCard = cards.length === 1;
-
+  // Three card layout (simplified for now)
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      maxWidth={isSingleCard ? 'lg' : '5xl'}
-      className="p-6 sm:p-8 flex flex-col items-center gap-4 sm:gap-6"
-    >
-      {isSingleCard
-          ? <SingleCardView card={cards[0]} isMessageLoading={isMessageLoading} isImageLoading={isImageLoading} generatedMessage={generatedMessages[0]} generatedImageUrl={generatedImageUrl} t={t} />
-          : <ThreeCardSpread cards={cards} isLoading={isMessageLoading} generatedMessages={generatedMessages} t={t} />
-      }
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6 sm:p-8">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl sm:text-4xl font-bold text-orange-800 tracking-wide mb-2">
+              {t.threeCardSpread}
+            </h2>
+          </div>
 
-      {error && (
-        <div className="text-center mt-6 p-4 bg-red-100/50 border border-red-200 rounded-lg">
-          <p className="text-red-600 text-sm font-medium">{error}</p>
-          <button
-            onClick={generateAllContent}
-            className="mt-3 bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-5 rounded-full text-sm transition-transform transform hover:scale-105"
-            aria-label="生成を再試行する"
-          >
-            再試行
-          </button>
-        </div>
-      )}
+          {messageError && (
+            <div className="mb-6">
+              <ErrorMessage
+                error={messageError}
+                language={language}
+                onRetry={handleRetryMessages}
+              />
+            </div>
+          )}
 
-      <div className="flex flex-col sm:flex-row gap-3 mt-8">
-        <button
-          onClick={handleSaveReading}
-          disabled={isSaved}
-          className={`${isSaved
-            ? 'bg-green-600 text-white cursor-default'
-            : 'bg-purple-600 hover:bg-purple-500 text-white hover:scale-105'
-          } font-bold py-2 px-6 rounded-full shadow-md transition-all transform`}
-          aria-label={isSaved ? t.saved : t.saveReading}
-        >
-          {isSaved ? (
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-              {t.saved}
+          {isMessageLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <LoadingSpinner text="三つの時の流れを読み取っています..." />
             </div>
           ) : (
-            t.save
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              {cards.map((card, index) => (
+                <div key={card.id} className="text-center">
+                  <h3 className="text-xl font-bold text-amber-800 mb-4">
+                    {index === 0 ? t.past : index === 1 ? t.present : t.future}
+                  </h3>
+                  <div className="bg-amber-50 p-6 rounded-lg border border-amber-200">
+                    <h4 className="text-lg font-semibold text-orange-800 mb-2">{card.name}</h4>
+                    <p className="text-sm text-amber-700 mb-4">{card.description}</p>
+                    {generatedMessages[index] && (
+                      <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-line">
+                        {generatedMessages[index]}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
-        </button>
 
-        <button
-          onClick={onClose}
-          className="bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-6 rounded-full shadow-md transition-transform transform hover:scale-105"
-          aria-label="モーダルを閉じてカードを引き直す"
-        >
-          {language === 'ja' ? 'もう一度引く' :
-           language === 'es' ? 'Tirar de Nuevo' :
-           language === 'fr' ? 'Tirer à Nouveau' :
-           'Draw Again'}
-        </button>
+          <div className="flex justify-center space-x-4 pt-6 border-t border-gray-200">
+            <button
+              onClick={handleSaveReading}
+              className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
+                isSaved
+                  ? 'bg-green-600 text-white'
+                  : 'bg-amber-600 hover:bg-amber-500 text-white'
+              }`}
+            >
+              {isSaved ? t.saved : t.saveReading}
+            </button>
+            <button
+              onClick={onClose}
+              className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-3 rounded-lg font-semibold transition-colors"
+            >
+              {t.close}
+            </button>
+          </div>
+        </div>
       </div>
-
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        .animate-fadeIn { animation: fadeIn 1s ease-in-out; }
-        .perspective-1000 { perspective: 1000px; }
-        .transform-style-3d { transform-style: preserve-3d; }
-      `}</style>
     </Modal>
   );
 };
