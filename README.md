@@ -60,3 +60,4 @@ HTMLファイルには完全なOGPメタタグが設定済みです：
 - Facebook、Twitter用の最適化
 - 多言語対応（ja_JP, en_US, es_ES, fr_FR）
 - 適切な画像サイズとalt属性
+# Trigger Vercel deployment Thu Sep 25 18:19:23 JST 2025
