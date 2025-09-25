@@ -112,8 +112,8 @@ const SingleCardView: React.FC<{
           <LoadingSpinner text="女神からのメッセージを受信中..." />
         </div>
       ) : generatedMessage ? (
-        <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-xl border border-amber-200/50 shadow-inner max-w-2xl mx-auto my-4">
-          <p className="text-slate-700 leading-relaxed whitespace-pre-line text-sm sm:text-base font-medium">
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-xl border border-amber-200/50 shadow-inner max-w-3xl mx-auto my-4">
+          <p className="text-slate-700 leading-relaxed whitespace-pre-line text-sm sm:text-base font-medium text-left">
             {generatedMessage}
           </p>
         </div>
@@ -396,9 +396,11 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
                     <h4 className="text-lg font-semibold text-orange-800 mb-2">{card.name}</h4>
                     <p className="text-sm text-amber-700 mb-4">{card.description}</p>
                     {generatedMessages[index] && (
-                      <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-line">
-                        {generatedMessages[index]}
-                      </p>
+                      <div className="bg-gradient-to-br from-white to-amber-50/30 p-4 rounded-lg border border-amber-100 mt-4">
+                        <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-line text-left">
+                          {generatedMessages[index]}
+                        </p>
+                      </div>
                     )}
                   </div>
                 </div>
