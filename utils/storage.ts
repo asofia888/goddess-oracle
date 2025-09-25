@@ -113,13 +113,41 @@ export const saveReading = (reading: NewReading): boolean => {
 
     const updatedReadings = [newReading, ...readings];
 
-    // Limit the history size to prevent localStorage from getting too large
-    if (updatedReadings.length > 50) {
-      updatedReadings.splice(50);
-    }
+    // Check storage size and limit history to prevent quota exceeded
+    const checkAndLimitReadings = (readings: SavedReading[]): SavedReading[] => {
+      let limitedReadings = [...readings];
+      let dataSize = JSON.stringify(limitedReadings).length;
 
-    localStorage.setItem(JOURNAL_KEY, JSON.stringify(updatedReadings));
-    console.log('Reading saved successfully. Total readings:', updatedReadings.length);
+      // Conservative limit: 4MB to leave room for other data
+      const MAX_SIZE = 4 * 1024 * 1024;
+      let maxCount = 50;
+
+      while (dataSize > MAX_SIZE && limitedReadings.length > 5) {
+        maxCount = Math.floor(maxCount * 0.8);
+        limitedReadings = limitedReadings.slice(0, maxCount);
+        dataSize = JSON.stringify(limitedReadings).length;
+      }
+
+      return limitedReadings;
+    };
+
+    const finalReadings = checkAndLimitReadings(updatedReadings);
+
+    try {
+      localStorage.setItem(JOURNAL_KEY, JSON.stringify(finalReadings));
+    } catch (quotaError) {
+      console.warn('Storage quota exceeded, reducing history size');
+      // Emergency cleanup: keep only last 10 readings
+      const emergencyReadings = finalReadings.slice(0, 10);
+      try {
+        localStorage.setItem(JOURNAL_KEY, JSON.stringify(emergencyReadings));
+      } catch (finalError) {
+        console.error('Critical storage error, clearing all data');
+        localStorage.removeItem(JOURNAL_KEY);
+        localStorage.setItem(JOURNAL_KEY, JSON.stringify([newReading]));
+      }
+    }
+    console.log('Reading saved successfully. Total readings:', finalReadings.length);
     return true;
   } catch (error) {
     console.error("Error saving to localStorage", error);
