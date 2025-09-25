@@ -396,11 +396,9 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
                     <h4 className="text-lg font-semibold text-orange-800 mb-2">{card.name}</h4>
                     <p className="text-sm text-amber-700 mb-4">{card.description}</p>
                     {generatedMessages[index] && (
-                      <div className="bg-gradient-to-br from-white to-amber-50/30 p-4 rounded-lg border border-amber-100 mt-4">
-                        <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-line text-left">
-                          {generatedMessages[index]}
-                        </p>
-                      </div>
+                      <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-line text-left">
+                        {generatedMessages[index]}
+                      </p>
                     )}
                   </div>
                 </div>

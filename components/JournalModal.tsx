@@ -121,11 +121,9 @@ const JournalModal: React.FC<JournalModalProps> = ({ isOpen, onClose, readings, 
                                   }}
                                 />
                             )}
-                            <div className="bg-gradient-to-br from-white to-amber-50/30 p-4 rounded-lg border border-amber-100">
-                              <p className="whitespace-pre-wrap text-stone-700 leading-relaxed text-left">
-                                {getSafeMessage(reading, 0)}
-                              </p>
-                            </div>
+                            <p className="whitespace-pre-wrap text-stone-700 leading-relaxed text-left">
+                              {getSafeMessage(reading, 0)}
+                            </p>
                         </div>
                     )}
                     {reading.mode === 'three' && (
@@ -143,11 +141,9 @@ const JournalModal: React.FC<JournalModalProps> = ({ isOpen, onClose, readings, 
                                             <span className="text-xs text-orange-600" title="元のメッセージを表示中">⚠</span>
                                           )}
                                         </h3>
-                                        <div className="bg-gradient-to-br from-white to-amber-50/30 p-3 rounded-lg border border-amber-100 mt-2">
-                                          <p className="whitespace-pre-wrap text-stone-700 leading-relaxed text-sm text-left">
-                                            {message}
-                                          </p>
-                                        </div>
+                                        <p className="whitespace-pre-wrap text-stone-700 leading-relaxed text-sm text-left">
+                                          {message}
+                                        </p>
                                     </div>
                                 );
                             })}
