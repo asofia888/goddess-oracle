@@ -312,7 +312,7 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
   if (cards.length === 1) {
     return (
       <Modal isOpen={isOpen} onClose={onClose}>
-        <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="bg-white rounded-xl shadow-2xl w-full">
           <div className="p-6 sm:p-8">
             <SingleCardView
               card={cards[0]}
@@ -355,7 +355,7 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
   // Three card layout (simplified for now)
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-2xl w-full">
         <div className="p-6 sm:p-8">
           <div className="text-center mb-8">
             <h2 className="text-3xl sm:text-4xl font-bold text-orange-800 tracking-wide mb-2">
