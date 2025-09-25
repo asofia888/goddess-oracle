@@ -1,15 +1,16 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { GODDESS_CARDS } from './constants';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import type { GoddessCardData, SavedReading, ReadingLevel, ReadingMode, Language } from './types';
 import OracleCard from './components/OracleCard';
-import MessageModal from './components/MessageModal';
-import JournalModal from './components/JournalModal';
-import DisclaimerModal from './components/DisclaimerModal';
-import ManualModal from './components/ManualModal';
 import LanguageSelector from './components/LanguageSelector';
 import { getReadings, clearReadings } from './utils/storage';
 import { detectLanguage, getTranslation } from './utils/i18n';
+
+// Dynamic imports for heavy modal components
+const MessageModal = lazy(() => import('./components/MessageModal'));
+const JournalModal = lazy(() => import('./components/JournalModal'));
+const DisclaimerModal = lazy(() => import('./components/DisclaimerModal'));
+const ManualModal = lazy(() => import('./components/ManualModal'));
 
 // Fisher-Yates shuffle algorithm
 const shuffleArray = <T,>(array: T[]): T[] => {
@@ -38,15 +39,32 @@ const App: React.FC = () => {
   const [t, setT] = useState(getTranslation('en'));
 
 
-  const shuffleAndSetCards = useCallback(() => {
-    setCards(shuffleArray(GODDESS_CARDS));
+  const shuffleAndSetCards = useCallback(async () => {
+    try {
+      const { GODDESS_CARDS } = await import('./constants');
+      setCards(shuffleArray(GODDESS_CARDS));
+    } catch (error) {
+      console.error('Error loading goddess cards:', error);
+    }
   }, []);
 
   useEffect(() => {
     const detectedLang = detectLanguage();
     setLanguage(detectedLang);
     setT(getTranslation(detectedLang));
-    setCards(shuffleArray(GODDESS_CARDS));
+
+    // Load goddess cards dynamically
+    const loadCards = async () => {
+      try {
+        const { GODDESS_CARDS } = await import('./constants');
+        setCards(shuffleArray(GODDESS_CARDS));
+      } catch (error) {
+        console.error('Error loading goddess cards:', error);
+        setCards([]);
+      }
+    };
+
+    loadCards();
 
     // Load readings with error handling
     try {
@@ -63,29 +81,34 @@ const App: React.FC = () => {
     setT(getTranslation(newLanguage));
   };
   
-  const performAnimatedShuffle = useCallback(() => {
+  const performAnimatedShuffle = useCallback(async () => {
     if (isAnimating) return;
 
-    // 拡散アニメーション用のスタイルを生成
-    // FIX: Cast the style object to React.CSSProperties to allow for custom CSS properties.
-    const styles = GODDESS_CARDS.map(
-      () =>
-        ({
-          '--translateX': `${(Math.random() - 0.5) * 150}vw`,
-          '--translateY': `${(Math.random() - 0.5) * 150}vh`,
-          '--rotate-end': `${(Math.random() - 0.5) * 1080}deg`,
-        } as React.CSSProperties)
-    );
-    setRandomStyles(styles);
-    
-    setSelectedCards([]);
-    setIsAnimating(true);
+    try {
+      const { GODDESS_CARDS } = await import('./constants');
 
-    // アニメーション完了後にカードを入れ替えて再表示
-    setTimeout(() => {
-      shuffleAndSetCards();
-      setIsAnimating(false);
-    }, 1000); // CSSアニメーションの時間に合わせる
+      // 拡散アニメーション用のスタイルを生成
+      const styles = GODDESS_CARDS.map(
+        () =>
+          ({
+            '--translateX': `${(Math.random() - 0.5) * 150}vw`,
+            '--translateY': `${(Math.random() - 0.5) * 150}vh`,
+            '--rotate-end': `${(Math.random() - 0.5) * 1080}deg`,
+          } as React.CSSProperties)
+      );
+      setRandomStyles(styles);
+
+      setSelectedCards([]);
+      setIsAnimating(true);
+
+      // アニメーション完了後にカードを入れ替えて再表示
+      setTimeout(async () => {
+        await shuffleAndSetCards();
+        setIsAnimating(false);
+      }, 1000); // CSSアニメーションの時間に合わせる
+    } catch (error) {
+      console.error('Error in animated shuffle:', error);
+    }
   }, [isAnimating, shuffleAndSetCards]);
 
   const handleCardSelect = (card: GoddessCardData) => {
@@ -302,10 +325,18 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      <MessageModal cards={selectedCards} isOpen={isModalOpen} onClose={handleReset} readingLevel={readingLevel} language={language} t={t} onSave={handleSaveReading} />
-      <JournalModal readings={readings} isOpen={isJournalOpen} onClose={() => setIsJournalOpen(false)} onClear={handleClearHistory} />
-      <DisclaimerModal isOpen={isDisclaimerOpen} onClose={() => setIsDisclaimerOpen(false)} />
-      <ManualModal isOpen={isManualOpen} onClose={() => setIsManualOpen(false)} />
+      <Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div></div>}>
+        <MessageModal cards={selectedCards} isOpen={isModalOpen} onClose={handleReset} readingLevel={readingLevel} language={language} t={t} onSave={handleSaveReading} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <JournalModal readings={readings} isOpen={isJournalOpen} onClose={() => setIsJournalOpen(false)} onClear={handleClearHistory} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <DisclaimerModal isOpen={isDisclaimerOpen} onClose={() => setIsDisclaimerOpen(false)} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <ManualModal isOpen={isManualOpen} onClose={() => setIsManualOpen(false)} />
+      </Suspense>
 
 
       <footer className="text-center mt-12 text-amber-800/80 text-sm">

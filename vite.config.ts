@@ -14,6 +14,32 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
+      },
+      build: {
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              // Separate vendor chunk for larger libraries
+              'google-genai': ['@google/genai'],
+              // Group modals together since they're lazy loaded
+              'modals': [
+                './components/MessageModal',
+                './components/JournalModal',
+                './components/DisclaimerModal',
+                './components/ManualModal'
+              ],
+              // Utils and constants
+              'utils': [
+                './utils/storage',
+                './utils/i18n',
+                './constants'
+              ]
+            }
+          }
+        },
+        chunkSizeWarningLimit: 300,
+        target: 'esnext',
+        minify: 'esbuild'
       }
     };
 });
