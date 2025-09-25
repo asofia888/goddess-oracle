@@ -73,9 +73,17 @@ export const saveReading = (reading: NewReading): boolean => {
   try {
     // Validate input data
     if (!reading || !reading.cards || reading.cards.length === 0) {
-      console.error('Invalid reading data provided');
+      console.error('Invalid reading data provided:', reading);
       return false;
     }
+
+    console.log('Saving reading with data:', {
+      mode: reading.mode,
+      cardsLength: reading.cards.length,
+      messagesLength: reading.generatedMessages?.length || 0,
+      hasImageUrl: !!reading.generatedImageUrl,
+      readingLevel: reading.readingLevel
+    });
 
     const readings = getReadings();
 
@@ -92,7 +100,7 @@ export const saveReading = (reading: NewReading): boolean => {
       date: new Date().toLocaleString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
       // Ensure generatedMessages array matches cards length
       generatedMessages: reading.cards.map((_, index) =>
-        reading.generatedMessages[index] || null
+        reading.generatedMessages && reading.generatedMessages[index] ? reading.generatedMessages[index] : null
       ),
       generatedImageUrl: reading.generatedImageUrl || null
     };
@@ -111,6 +119,7 @@ export const saveReading = (reading: NewReading): boolean => {
     }
 
     localStorage.setItem(JOURNAL_KEY, JSON.stringify(updatedReadings));
+    console.log('Reading saved successfully. Total readings:', updatedReadings.length);
     return true;
   } catch (error) {
     console.error("Error saving to localStorage", error);

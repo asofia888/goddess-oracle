@@ -299,11 +299,19 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
         readingLevel,
       };
 
-      await saveReading(newReading);
-      setIsSaved(true);
-      onSave?.();
+      console.log('Attempting to save reading:', newReading);
 
-      setTimeout(() => setIsSaved(false), 3000);
+      const saveSuccess = saveReading(newReading);
+
+      if (saveSuccess) {
+        console.log('Reading saved successfully');
+        setIsSaved(true);
+        onSave?.();
+        setTimeout(() => setIsSaved(false), 3000);
+      } else {
+        console.error('Failed to save reading: saveReading returned false');
+        // Could show an error message to user here if needed
+      }
     } catch (error) {
       console.error('Failed to save reading:', error);
     }
