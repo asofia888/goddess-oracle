@@ -386,17 +386,19 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
               <LoadingSpinner text="三つの時の流れを読み取っています..." />
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="space-y-8 mb-8">
               {cards.map((card, index) => (
-                <div key={card.id} className="text-center">
-                  <h3 className="text-xl font-bold text-amber-800 mb-4">
-                    {index === 0 ? t.past : index === 1 ? t.present : t.future}
-                  </h3>
-                  <div className="bg-amber-50 p-6 rounded-lg border border-amber-200">
-                    <h4 className="text-lg font-semibold text-orange-800 mb-2">{card.name}</h4>
-                    <p className="text-sm text-amber-700 mb-4">{card.description}</p>
+                <div key={card.id} className="max-w-4xl mx-auto">
+                  <div className="text-center mb-4">
+                    <h3 className="text-2xl font-bold text-amber-800 mb-2">
+                      {index === 0 ? t.past : index === 1 ? t.present : t.future}
+                    </h3>
+                    <h4 className="text-xl font-semibold text-orange-800">{card.name}</h4>
+                    <p className="text-amber-700 mt-1">{card.description}</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-xl border border-amber-200/50 shadow-inner">
                     {generatedMessages[index] && (
-                      <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-line text-left">
+                      <p className="text-slate-700 leading-relaxed whitespace-pre-line text-left text-base">
                         {generatedMessages[index]}
                       </p>
                     )}
