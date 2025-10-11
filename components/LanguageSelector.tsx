@@ -15,9 +15,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
 
   const languages = [
     { code: 'ja' as Language, name: '日本語', flag: '🇯🇵' },
-    { code: 'en' as Language, name: 'English', flag: '🇺🇸' },
-    { code: 'es' as Language, name: 'Español', flag: '🇪🇸' },
-    { code: 'fr' as Language, name: 'Français', flag: '🇫🇷' }
+    { code: 'en' as Language, name: 'English', flag: '🇺🇸' }
   ];
 
   const currentLang = languages.find(lang => lang.code === currentLanguage);
