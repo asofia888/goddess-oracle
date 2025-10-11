@@ -29,6 +29,10 @@ export interface Translations {
   save: string;
   saved: string;
   saveReading: string;
+  loadingGoddessImage: string;
+  loadingMessage: string;
+  loadingThreeCards: string;
+  loadingImages: string;
   manualContent: {
     title: string;
     singleCardTitle: string;
@@ -70,6 +74,10 @@ export const translations: Record<Language, Translations> = {
     save: '保存',
     saved: '保存済み',
     saveReading: 'リーディングを保存',
+    loadingGoddessImage: '女神の姿を顕現中...',
+    loadingMessage: '女神からのメッセージを受信中...',
+    loadingThreeCards: '三つの時の流れを読み取っています...',
+    loadingImages: '読み込み中...',
     manualContent: {
       title: '女神のオラクルガイダンス 使い方',
       singleCardTitle: '1枚引き',
@@ -109,6 +117,10 @@ export const translations: Record<Language, Translations> = {
     save: 'Save',
     saved: 'Saved',
     saveReading: 'Save Reading',
+    loadingGoddessImage: 'Manifesting the Goddess...',
+    loadingMessage: 'Receiving message from the Goddess...',
+    loadingThreeCards: 'Reading the three flows of time...',
+    loadingImages: 'Loading...',
     manualContent: {
       title: 'Goddess Oracle Guidance - How to Use',
       singleCardTitle: 'Single Card Reading',
@@ -148,6 +160,10 @@ export const translations: Record<Language, Translations> = {
     save: 'Guardar',
     saved: 'Guardado',
     saveReading: 'Guardar Lectura',
+    loadingGoddessImage: 'Manifestando la Diosa...',
+    loadingMessage: 'Recibiendo mensaje de la Diosa...',
+    loadingThreeCards: 'Leyendo los tres flujos del tiempo...',
+    loadingImages: 'Cargando...',
     manualContent: {
       title: 'Guía del Oráculo de la Diosa - Cómo Usar',
       singleCardTitle: 'Lectura de Una Carta',
@@ -187,6 +203,10 @@ export const translations: Record<Language, Translations> = {
     save: 'Enregistrer',
     saved: 'Enregistré',
     saveReading: 'Enregistrer la Lecture',
+    loadingGoddessImage: 'Manifestation de la Déesse...',
+    loadingMessage: 'Réception du message de la Déesse...',
+    loadingThreeCards: 'Lecture des trois flux du temps...',
+    loadingImages: 'Chargement...',
     manualContent: {
       title: 'Guide de l\'Oracle de la Déesse - Mode d\'emploi',
       singleCardTitle: 'Lecture d\'Une Carte',

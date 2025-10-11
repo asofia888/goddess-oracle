@@ -72,7 +72,7 @@ const SingleCardView: React.FC<{
   <div className="text-center w-full">
     <div className="w-full max-w-xs mx-auto aspect-[3/4] bg-amber-100 rounded-lg mb-6 flex items-center justify-center border border-amber-200/50 shadow-inner overflow-hidden">
       {isImageLoading ? (
-        <LoadingSpinner text="女神の姿を顕現中..." />
+        <LoadingSpinner text={t.loadingGoddessImage} />
       ) : imageError ? (
         <div className="p-4 w-full">
           <ErrorMessage
@@ -110,7 +110,7 @@ const SingleCardView: React.FC<{
 
     {isMessageLoading ? (
         <div className="min-h-[6rem] flex items-center justify-center">
-          <LoadingSpinner text="女神からのメッセージを受信中..." />
+          <LoadingSpinner text={t.loadingMessage} />
         </div>
       ) : generatedMessage ? (
         <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-xl border border-amber-200/50 shadow-inner max-w-3xl mx-auto my-4">
@@ -372,7 +372,7 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
 
           {isMessageLoading ? (
             <div className="flex items-center justify-center py-12">
-              <LoadingSpinner text="三つの時の流れを読み取っています..." />
+              <LoadingSpinner text={t.loadingThreeCards} />
             </div>
           ) : (
             <div className="space-y-8 mb-8">
@@ -389,7 +389,7 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
                   {/* Image above the message */}
                   <div className="w-full max-w-xs mx-auto aspect-[3/4] bg-amber-100 rounded-lg mb-4 flex items-center justify-center border border-amber-200/50 shadow-inner overflow-hidden">
                     {isImageLoading ? (
-                      <LoadingSpinner text="読み込み中..." />
+                      <LoadingSpinner text={t.loadingImages} />
                     ) : generatedImageUrls[index] ? (
                       <img
                         src={generatedImageUrls[index]!}
