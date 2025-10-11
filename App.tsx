@@ -42,12 +42,12 @@ const App: React.FC = () => {
 
   const shuffleAndSetCards = useCallback(async () => {
     try {
-      const { GODDESS_CARDS } = await import('./constants');
-      setCards(shuffleArray(GODDESS_CARDS));
+      const { getGoddessCards } = await import('./constants');
+      setCards(shuffleArray(getGoddessCards(language)));
     } catch (error) {
       console.error('Error loading goddess cards:', error);
     }
-  }, []);
+  }, [language]);
 
   useEffect(() => {
     const detectedLang = detectLanguage();
@@ -57,8 +57,8 @@ const App: React.FC = () => {
     // Load goddess cards dynamically
     const loadCards = async () => {
       try {
-        const { GODDESS_CARDS } = await import('./constants');
-        setCards(shuffleArray(GODDESS_CARDS));
+        const { getGoddessCards } = await import('./constants');
+        setCards(shuffleArray(getGoddessCards(detectedLang)));
       } catch (error) {
         console.error('Error loading goddess cards:', error);
         setCards([]);
@@ -77,19 +77,27 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const handleLanguageChange = (newLanguage: Language) => {
+  const handleLanguageChange = async (newLanguage: Language) => {
     setLanguage(newLanguage);
     setT(getTranslation(newLanguage));
+    // Reload cards in the new language
+    try {
+      const { getGoddessCards } = await import('./constants');
+      setCards(shuffleArray(getGoddessCards(newLanguage)));
+    } catch (error) {
+      console.error('Error reloading cards for new language:', error);
+    }
   };
   
   const performAnimatedShuffle = useCallback(async () => {
     if (isAnimating) return;
 
     try {
-      const { GODDESS_CARDS } = await import('./constants');
+      const { getGoddessCards } = await import('./constants');
+      const currentCards = getGoddessCards(language);
 
       // 拡散アニメーション用のスタイルを生成
-      const styles = GODDESS_CARDS.map(
+      const styles = currentCards.map(
         () =>
           ({
             '--translateX': `${(Math.random() - 0.5) * 150}vw`,
