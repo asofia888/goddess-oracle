@@ -163,12 +163,15 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
   const [isSaved, setIsSaved] = useState(false);
 
   // Helper functions for content generation
-  const generateMessages = async (): Promise<(string | null)[]> => {
+  const generateMessages = useCallback(async (): Promise<(string | null)[]> => {
     const mode = cards.length === 1 ? 'single' : 'three';
+
+    console.log('Generating messages with language:', language);
 
     return await retryWithExponentialBackoff(async () => {
       if (mode === 'single') {
         const prompt = generateSingleCardMessagePrompt(cards[0], readingLevel, language);
+        console.log('Single card prompt for language', language, ':', prompt.substring(0, 100));
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash',
           contents: prompt,
@@ -176,6 +179,7 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
         return [response.text];
       } else {
         const prompt = generateThreeCardSpreadMessagePrompt(cards, readingLevel, language);
+        console.log('Three card prompt for language', language, ':', prompt.substring(0, 100));
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash',
           contents: prompt,
@@ -188,7 +192,7 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
         return [jsonResponse.past, jsonResponse.present, jsonResponse.future];
       }
     });
-  };
+  }, [cards, readingLevel, language]);
 
   const loadLocalImage = async (card: GoddessCardData): Promise<string | null> => {
     return await retryWithExponentialBackoff(async () => {
@@ -291,7 +295,7 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
       setIsMessageLoading(false);
       setIsImageLoading(false);
     }
-  }, [cards, readingLevel, language, isOpen]);
+  }, [cards, readingLevel, language, isOpen, generateMessages]);
 
   useEffect(() => {
     if (isOpen && cards.length > 0) {
