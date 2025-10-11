@@ -4,6 +4,7 @@ import type { GoddessCardData, NewReading, ReadingLevel } from '../types';
 import { saveReading } from '../utils/storage';
 import type { Language, Translations } from '../utils/i18n';
 import { retryWithExponentialBackoff, parseAPIError, type APIError } from '../utils/errorHandling';
+import { getRandomGoddessImage, preloadImage } from '../utils/imageSelection';
 import Modal from './shared/Modal';
 import LoadingSpinner from './shared/LoadingSpinner';
 import ErrorMessage from './shared/ErrorMessage';
@@ -167,25 +168,11 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
     });
   };
 
-  const generateImage = async (card: GoddessCardData): Promise<string | null> => {
+  const loadLocalImage = async (card: GoddessCardData): Promise<string | null> => {
     return await retryWithExponentialBackoff(async () => {
-      const imagePrompt = `「${card.name}」（${card.description}）の、神々しく美しい芸術的な肖像画。幻想的で優美な雰囲気で。`;
-      const response = await ai.models.generateImages({
-        model: 'imagen-4.0-generate-001',
-        prompt: imagePrompt,
-        config: {
-          numberOfImages: 1,
-          outputMimeType: 'image/jpeg',
-          aspectRatio: '3:4',
-        },
-      });
-
-      if (!response.generatedImages || response.generatedImages.length === 0 || !response.generatedImages[0].image) {
-        throw new Error('No image data in response');
-      }
-
-      const base64ImageBytes: string = response.generatedImages[0].image.imageBytes;
-      return `data:image/jpeg;base64,${base64ImageBytes}`;
+      const imagePath = getRandomGoddessImage(card);
+      await preloadImage(imagePath);
+      return imagePath;
     });
   };
 
@@ -221,7 +208,7 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
     setIsImageLoading(true);
 
     try {
-      const imageUrl = await generateImage(cards[0]);
+      const imageUrl = await loadLocalImage(cards[0]);
       setGeneratedImageUrl(imageUrl);
     } catch (error) {
       const apiError = parseAPIError(error);
@@ -247,11 +234,11 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
       // Generate messages first (critical functionality)
       const messagePromise = generateMessages();
 
-      // Generate image concurrently for single card mode
+      // Load image concurrently for single card mode
       let imagePromise: Promise<string | null> = Promise.resolve(null);
       if (mode === 'single') {
         setIsImageLoading(true);
-        imagePromise = generateImage(cards[0]);
+        imagePromise = loadLocalImage(cards[0]);
       }
 
       // Wait for both operations
