@@ -37,17 +37,6 @@ export interface SavedReading {
 
 export type NewReading = Omit<SavedReading, 'id' | 'date'>;
 
-// API request/response types
-export interface GenerateMessageRequestBody {
-  cards: GoddessCardData[];
-  mode: ReadingMode;
-  language?: Language;
-}
-
-export interface GenerateImageRequestBody {
-  prompt: string;
-}
-
 // Translation types
 export interface Translations {
   appTitle: string;

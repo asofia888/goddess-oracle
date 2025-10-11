@@ -135,7 +135,6 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
   const [generatedMessages, setGeneratedMessages] = useState<(string | null)[]>([]);
   const [isMessageLoading, setIsMessageLoading] = useState(false);
   const [messageError, setMessageError] = useState<APIError | null>(null);
-  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [generatedImageUrls, setGeneratedImageUrls] = useState<(string | null)[]>([]);
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [imageError, setImageError] = useState<APIError | null>(null);
@@ -203,14 +202,16 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
   };
 
   const handleRetryImage = async () => {
-    if (cards.length !== 1) return;
-
     setImageError(null);
     setIsImageLoading(true);
 
     try {
-      const imageUrl = await loadLocalImage(cards[0]);
-      setGeneratedImageUrl(imageUrl);
+      const imagePromises = cards.map(card => loadLocalImage(card));
+      const imageResults = await Promise.allSettled(imagePromises);
+      const loadedImages = imageResults.map(result =>
+        result.status === 'fulfilled' ? result.value : null
+      );
+      setGeneratedImageUrls(loadedImages);
     } catch (error) {
       const apiError = parseAPIError(error);
       setImageError(apiError);
@@ -226,60 +227,40 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
     setMessageError(null);
     setImageError(null);
     setGeneratedMessages([]);
-    setGeneratedImageUrl(null);
     setGeneratedImageUrls([]);
     setIsMessageLoading(true);
-
-    const mode = cards.length === 1 ? 'single' : 'three';
+    setIsImageLoading(true);
 
     try {
-      // Generate messages first (critical functionality)
+      // Generate messages and load images concurrently
       const messagePromise = generateMessages();
+      const imagePromises = cards.map(card => loadLocalImage(card));
 
-      // Load images concurrently
-      if (mode === 'single') {
-        setIsImageLoading(true);
-        const imagePromise = loadLocalImage(cards[0]);
+      const [messages, ...imageResults] = await Promise.allSettled([messagePromise, ...imagePromises]);
 
-        const [messages, imageUrl] = await Promise.allSettled([messagePromise, imagePromise]);
+      // Handle message results
+      if (messages.status === 'fulfilled') {
+        setGeneratedMessages(messages.value);
+      } else {
+        const apiError = parseAPIError(messages.reason);
+        setMessageError(apiError);
+        setGeneratedMessages(getFallbackMessages());
+      }
 
-        // Handle message results
-        if (messages.status === 'fulfilled') {
-          setGeneratedMessages(messages.value);
-        } else {
-          const apiError = parseAPIError(messages.reason);
-          setMessageError(apiError);
-          setGeneratedMessages(getFallbackMessages());
-        }
+      // Handle image results
+      const loadedImages = imageResults.map(result =>
+        result.status === 'fulfilled' ? result.value : null
+      );
+      setGeneratedImageUrls(loadedImages);
 
-        // Handle image results
-        if (imageUrl.status === 'fulfilled') {
-          setGeneratedImageUrl(imageUrl.value);
-        } else {
-          const apiError = parseAPIError(imageUrl.reason);
+      // Check if any image failed
+      const hasImageError = imageResults.some(result => result.status === 'rejected');
+      if (hasImageError) {
+        const firstError = imageResults.find(result => result.status === 'rejected');
+        if (firstError && firstError.status === 'rejected') {
+          const apiError = parseAPIError(firstError.reason);
           setImageError(apiError);
         }
-      } else {
-        // Three card mode: load all three images
-        setIsImageLoading(true);
-        const imagePromises = cards.map(card => loadLocalImage(card));
-
-        const [messages, ...imageResults] = await Promise.allSettled([messagePromise, ...imagePromises]);
-
-        // Handle message results
-        if (messages.status === 'fulfilled') {
-          setGeneratedMessages(messages.value);
-        } else {
-          const apiError = parseAPIError(messages.reason);
-          setMessageError(apiError);
-          setGeneratedMessages(getFallbackMessages());
-        }
-
-        // Handle image results
-        const loadedImages = imageResults.map(result =>
-          result.status === 'fulfilled' ? result.value : null
-        );
-        setGeneratedImageUrls(loadedImages);
       }
 
     } catch (error) {
@@ -303,7 +284,7 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
         mode: cards.length === 1 ? 'single' : 'three',
         cards,
         generatedMessages,
-        generatedImageUrl,
+        generatedImageUrl: generatedImageUrls[0] || null, // For backward compatibility, save first image
         readingLevel,
       };
 
@@ -335,7 +316,7 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
               isMessageLoading={isMessageLoading}
               isImageLoading={isImageLoading}
               generatedMessage={generatedMessages[0]}
-              generatedImageUrl={generatedImageUrl}
+              generatedImageUrl={generatedImageUrls[0]}
               messageError={messageError}
               imageError={imageError}
               onRetryMessage={handleRetryMessages}

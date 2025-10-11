@@ -122,8 +122,10 @@ export function getRandomGoddessImage(card: GoddessCardData): string {
   const folderName = goddessNameToFolder[card.name];
 
   if (!folderName) {
-    console.warn(`No folder mapping found for goddess: ${card.name}`);
-    return '/images/placeholder.webp'; // Fallback image
+    console.error(`No folder mapping found for goddess: ${card.name}`);
+    console.error(`Available mappings:`, Object.keys(goddessNameToFolder));
+    // Return a default goddess image as fallback (use first available goddess)
+    return `/images/amenouzume/1.webp`;
   }
 
   const imageCount = goddessImageCounts[folderName] || 5;

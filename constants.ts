@@ -326,7 +326,7 @@ export const GODDESS_CARDS: GoddessCardData[] = [
   },
   {
     id: 18,
-    name: 'ラクシュミ',
+    name: 'ラクシュミー',
     description: '富、幸運、繁栄の女神',
     theme: '豊かさの受け取り',
     secondaryThemes: ['富', '幸運', '繁栄'],
@@ -341,11 +341,11 @@ export const GODDESS_CARDS: GoddessCardData[] = [
     ],
     colors: ['gold', 'pink', 'white'],
     symbols: ['蓮', '金貨', '象'],
-    message: '豊かさと幸運の女神、ラクシュミ。物質的な豊かさも精神的な豊かさも、あなたに流れ込んでいます。感謝の心でそれを受け取り、分かち合いなさい。'
+    message: '豊かさと幸運の女神、ラクシュミー。物質的な豊かさも精神的な豊かさも、あなたに流れ込んでいます。感謝の心でそれを受け取り、分かち合いなさい。'
   },
   {
     id: 19,
-    name: 'サラスヴァティ',
+    name: 'サラスヴァティー',
     description: '知識、音楽、芸術の女神',
     theme: '学習・知識',
     secondaryThemes: ['音楽', '芸術', '流れ'],
@@ -360,11 +360,11 @@ export const GODDESS_CARDS: GoddessCardData[] = [
     ],
     colors: ['white', 'yellow', 'blue'],
     symbols: ['本', '楽器', '白鳥'],
-    message: '知識と芸術の女神、サラスヴァティ。学び、表現することに喜びを見出しなさい。あなたの言葉と創造物は、世界を美しくする力を持っています。'
+    message: '知識と芸術の女神、サラスヴァティー。学び、表現することに喜びを見出しなさい。あなたの言葉と創造物は、世界を美しくする力を持っています。'
   },
   {
     id: 20,
-    name: 'パールヴァティ',
+    name: 'パールヴァティー',
     description: '愛、献身、力の女神',
     theme: '愛の表現',
     secondaryThemes: ['献身', '力', '山'],
@@ -379,7 +379,7 @@ export const GODDESS_CARDS: GoddessCardData[] = [
     ],
     colors: ['pink', 'green', 'gold'],
     symbols: ['山', '花', '愛'],
-    message: 'ヒマラヤの娘、パールヴァティ。あなたの献身と忍耐は、やがて偉大な力と結びつきます。愛する対象に深くコミットしなさい。'
+    message: 'ヒマラヤの娘、パールヴァティー。あなたの献身と忍耐は、やがて偉大な力と結びつきます。愛する対象に深くコミットしなさい。'
   },
   {
     id: 21,
@@ -782,7 +782,7 @@ export const GODDESS_CARDS: GoddessCardData[] = [
   },
   {
     id: 42,
-    name: 'シータ',
+    name: 'シーター',
     description: '貞節、勇気、献身の女神',
     theme: '信念・誠実さ',
     secondaryThemes: ['貞節', '勇気', '献身'],
@@ -797,7 +797,7 @@ export const GODDESS_CARDS: GoddessCardData[] = [
     ],
     colors: ['white', 'gold', 'green'],
     symbols: ['大地', '純潔', '献身'],
-    message: '貞節と勇気の女神、シータ。どんな試練の中にあっても、あなたの内なる光と徳は失われません。真実と誠実さを貫きなさい。'
+    message: '貞節と勇気の女神、シーター。どんな試練の中にあっても、あなたの内なる光と徳は失われません。真実と誠実さを貫きなさい。'
   },
   {
     id: 43,
