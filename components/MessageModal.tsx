@@ -405,32 +405,28 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
                     <p className="text-amber-700 mt-1">{card.description}</p>
                   </div>
 
-                  <div className="flex flex-col md:flex-row gap-4 items-start">
-                    {/* Image on the left side for desktop, top for mobile */}
-                    <div className="w-full md:w-48 flex-shrink-0 mx-auto md:mx-0">
-                      <div className="aspect-[3/4] bg-amber-100 rounded-lg flex items-center justify-center border border-amber-200/50 shadow-inner overflow-hidden">
-                        {isImageLoading ? (
-                          <LoadingSpinner text="読み込み中..." />
-                        ) : generatedImageUrls[index] ? (
-                          <img
-                            src={generatedImageUrls[index]!}
-                            alt={`${card.name}の姿`}
-                            className="w-full h-full object-cover rounded-lg animate-fadeIn"
-                          />
-                        ) : (
-                          <div className="text-amber-700/50 p-4 text-center text-sm">画像</div>
-                        )}
-                      </div>
-                    </div>
+                  {/* Image above the message */}
+                  <div className="w-full max-w-xs mx-auto aspect-[3/4] bg-amber-100 rounded-lg mb-4 flex items-center justify-center border border-amber-200/50 shadow-inner overflow-hidden">
+                    {isImageLoading ? (
+                      <LoadingSpinner text="読み込み中..." />
+                    ) : generatedImageUrls[index] ? (
+                      <img
+                        src={generatedImageUrls[index]!}
+                        alt={`${card.name}の姿`}
+                        className="w-full h-full object-cover rounded-lg animate-fadeIn"
+                      />
+                    ) : (
+                      <div className="text-amber-700/50 p-4 text-center text-sm">画像</div>
+                    )}
+                  </div>
 
-                    {/* Message on the right side for desktop, bottom for mobile */}
-                    <div className="flex-1 bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-xl border border-amber-200/50 shadow-inner">
-                      {generatedMessages[index] && (
-                        <p className="text-slate-700 leading-relaxed whitespace-pre-line text-left text-base">
-                          {generatedMessages[index]}
-                        </p>
-                      )}
-                    </div>
+                  {/* Message below the image */}
+                  <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-xl border border-amber-200/50 shadow-inner">
+                    {generatedMessages[index] && (
+                      <p className="text-slate-700 leading-relaxed whitespace-pre-line text-left text-base">
+                        {generatedMessages[index]}
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}
