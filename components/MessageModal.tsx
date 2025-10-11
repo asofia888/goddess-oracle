@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { GoogleGenAI, Type } from "@google/genai";
 import type { GoddessCardData, NewReading, ReadingLevel } from '../types';
 import { saveReading } from '../utils/storage';
 import type { Language, Translations } from '../utils/i18n';
@@ -22,61 +21,8 @@ interface MessageModalProps {
   onSave?: () => void;
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-const generateSingleCardMessagePrompt = (card: GoddessCardData, level: ReadingLevel, language: Language) => {
-  if (language === 'en') {
-    const basePrompt = `You are a sacred oracle. Please deliver a message from the goddess "${card.name}" (${card.description}). The original message is: "${card.message}". Based on this information, generate a deeper, insightful, and personalized oracle message. The tone should be graceful, empathetic, and nurturing, as if the goddess is speaking directly to the reader. Avoid strong imperatives or definitive statements. Instead, use gentle, receptive language such as "you might consider," "perhaps," or "you may find."`;
-    const deepInsightPrompt = `Additionally, address the potential challenges this card indicates and themes the reader needs to overcome. Include specific, practical advice to encourage soul growth.`;
-    const finalPrompt = level === 'deep'
-      ? `${basePrompt} ${deepInsightPrompt} Keep the message within 400 words and use natural paragraph breaks for readability.`
-      : `${basePrompt} Keep the message within 350 words and use natural paragraph breaks for readability.`;
-    return finalPrompt;
-  } else {
-    const basePrompt = `あなたは神聖な神託です。女神「${card.name}」（${card.description}）からのメッセージを伝えてください。元のメッセージは「${card.message}」です。この情報に基づき、より深く、洞察に満ちた、パーソナライズされた神託のメッセージを生成してください。口調は、女神が直接語りかけるように、優雅で、共感的で、包み込むような女性的なものにしてください。「～しなさい」や「～だろう」のような強い命令形や断定的な表現は避け、「～すると良いでしょう」「～かもしれません」「～でしょう」のように、柔らかく、受け入れやすい言葉遣いを徹底してください。`;
-    const deepInsightPrompt = `さらに、このカードが示す潜在的な課題や、あなたが乗り越えるべきテーマについても深く言及してください。魂の成長を促すための、具体的で実践的なアドバイスを加えてください。`;
-    const finalPrompt = level === 'deep'
-      ? `${basePrompt} ${deepInsightPrompt} メッセージは全体で600文字以内とし、適度に改行を入れて読みやすくしてください。`
-      : `${basePrompt} メッセージは550文字以内とし、適度に改行を入れて読みやすくしてください。`;
-    return finalPrompt;
-  }
-};
-
-const generateThreeCardSpreadMessagePrompt = (cards: GoddessCardData[], level: ReadingLevel, language: Language) => {
-  if (language === 'en') {
-    const basePrompt = `You are a sacred oracle performing a three-card reading for past, present, and future.
-The Past card is "${cards[0].name}" (${cards[0].description}).
-The Present card is "${cards[1].name}" (${cards[1].description}).
-The Future card is "${cards[2].name}" (${cards[2].description}).
-Interpret the combination of these three cards and generate deep, insightful messages for each card according to its position (past, present, future). The three messages should relate to each other and flow together like a single narrative. The tone should be graceful, empathetic, and nurturing, as if the goddess is speaking directly to the reader. Avoid strong imperatives or definitive statements. Instead, use gentle, receptive language such as "you might consider," "perhaps," or "you may find."`;
-    const deepInsightPrompt = `For each card's message, address not only its surface meaning but also what it means for the reader's inner growth and what opportunities for overcoming challenges it suggests.`;
-    const finalPrompt = level === 'deep'
-      ? `${basePrompt} ${deepInsightPrompt} Use natural paragraph breaks to make each message readable.`
-      : `${basePrompt} Use natural paragraph breaks to make each message readable.`;
-    return finalPrompt;
-  } else {
-    const basePrompt = `あなたは神聖な神託です。過去、現在、未来を占う3枚引きのリーディングを行います。
-過去のカードは「${cards[0].name}」（${cards[0].description}）。
-現在のカードは「${cards[1].name}」（${cards[1].description}）。
-未来のカードは「${cards[2].name}」（${cards[2].description}）。
-これら3枚のカードの組み合わせを解釈し、それぞれのカードについて、その位置（過去、現在、未来）に応じた、深く洞察に満ちたメッセージを生成してください。3つのメッセージは互いに関連し合い、一つの物語のように繋がるようにしてください。口調は、女神が直接語りかけるように、優雅で、共感的で、包み込むような女性的なものにしてください。「～しなさい」や「～だろう」のような強い命令形や断定的な表現は避け、「～すると良いでしょう」「～かもしれません」「～でしょう」のように、柔らかく、受け入れやすい言葉遣いを徹底してください。`;
-    const deepInsightPrompt = `各カードのメッセージには、それが示す表面的な意味だけでなく、あなたの内面的な成長にとってどのような意味を持つのか、どんな課題を乗り越える機会を示唆しているのかについても触れてください。`;
-    const finalPrompt = level === 'deep'
-      ? `${basePrompt} ${deepInsightPrompt} 各メッセージは、読みやすくなるように適度に改行を入れてください。`
-      : `${basePrompt} 各メッセージは、読みやすくなるように適度に改行を入れてください。`;
-    return finalPrompt;
-  }
-};
-
-const threeCardResponseSchema = {
-    type: Type.OBJECT,
-    properties: {
-        past: { type: Type.STRING, description: "過去のカードに関するメッセージです。" },
-        present: { type: Type.STRING, description: "現在のカードに関するメッセージです。" },
-        future: { type: Type.STRING, description: "未来のカードに関するメッセージです。" },
-    },
-    required: ["past", "present", "future"],
-};
+// Development flag for conditional logging
+const isDevelopment = import.meta.env.DEV;
 
 const SingleCardView: React.FC<{
   card: GoddessCardData;
@@ -166,31 +112,40 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
   const generateMessages = useCallback(async (): Promise<(string | null)[]> => {
     const mode = cards.length === 1 ? 'single' : 'three';
 
-    console.log('Generating messages with language:', language);
+    if (isDevelopment) {
+      console.log('Generating messages with language:', language, 'mode:', mode);
+    }
 
     return await retryWithExponentialBackoff(async () => {
-      if (mode === 'single') {
-        const prompt = generateSingleCardMessagePrompt(cards[0], readingLevel, language);
-        console.log('Single card prompt for language', language, ':', prompt.substring(0, 100));
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: prompt,
-        });
-        return [response.text];
-      } else {
-        const prompt = generateThreeCardSpreadMessagePrompt(cards, readingLevel, language);
-        console.log('Three card prompt for language', language, ':', prompt.substring(0, 100));
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: prompt,
-          config: {
-            responseMimeType: "application/json",
-            responseSchema: threeCardResponseSchema,
-          },
-        });
-        const jsonResponse = JSON.parse(response.text);
-        return [jsonResponse.past, jsonResponse.present, jsonResponse.future];
+      const response = await fetch('/api/generate-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cards: cards.map(card => ({
+            name: card.name,
+            description: card.description,
+            message: card.message,
+          })),
+          readingLevel,
+          language,
+          mode,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
       }
+
+      const data = await response.json();
+
+      if (!data.messages || !Array.isArray(data.messages)) {
+        throw new Error('Invalid response format from API');
+      }
+
+      return data.messages;
     });
   }, [cards, readingLevel, language]);
 
@@ -314,18 +269,21 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
         readingLevel,
       };
 
-      console.log('Attempting to save reading:', newReading);
+      if (isDevelopment) {
+        console.log('Attempting to save reading:', newReading);
+      }
 
       const saveSuccess = saveReading(newReading);
 
       if (saveSuccess) {
-        console.log('Reading saved successfully');
+        if (isDevelopment) {
+          console.log('Reading saved successfully');
+        }
         setIsSaved(true);
         onSave?.();
         setTimeout(() => setIsSaved(false), 3000);
       } else {
         console.error('Failed to save reading: saveReading returned false');
-        // Could show an error message to user here if needed
       }
     } catch (error) {
       console.error('Failed to save reading:', error);
