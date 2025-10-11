@@ -136,6 +136,7 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
   const [isMessageLoading, setIsMessageLoading] = useState(false);
   const [messageError, setMessageError] = useState<APIError | null>(null);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [generatedImageUrls, setGeneratedImageUrls] = useState<(string | null)[]>([]);
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [imageError, setImageError] = useState<APIError | null>(null);
   const [isSaved, setIsSaved] = useState(false);
@@ -226,6 +227,7 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
     setImageError(null);
     setGeneratedMessages([]);
     setGeneratedImageUrl(null);
+    setGeneratedImageUrls([]);
     setIsMessageLoading(true);
 
     const mode = cards.length === 1 ? 'single' : 'three';
@@ -234,31 +236,50 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
       // Generate messages first (critical functionality)
       const messagePromise = generateMessages();
 
-      // Load image concurrently for single card mode
-      let imagePromise: Promise<string | null> = Promise.resolve(null);
+      // Load images concurrently
       if (mode === 'single') {
         setIsImageLoading(true);
-        imagePromise = loadLocalImage(cards[0]);
-      }
+        const imagePromise = loadLocalImage(cards[0]);
 
-      // Wait for both operations
-      const [messages, imageUrl] = await Promise.allSettled([messagePromise, imagePromise]);
+        const [messages, imageUrl] = await Promise.allSettled([messagePromise, imagePromise]);
 
-      // Handle message results
-      if (messages.status === 'fulfilled') {
-        setGeneratedMessages(messages.value);
+        // Handle message results
+        if (messages.status === 'fulfilled') {
+          setGeneratedMessages(messages.value);
+        } else {
+          const apiError = parseAPIError(messages.reason);
+          setMessageError(apiError);
+          setGeneratedMessages(getFallbackMessages());
+        }
+
+        // Handle image results
+        if (imageUrl.status === 'fulfilled') {
+          setGeneratedImageUrl(imageUrl.value);
+        } else {
+          const apiError = parseAPIError(imageUrl.reason);
+          setImageError(apiError);
+        }
       } else {
-        const apiError = parseAPIError(messages.reason);
-        setMessageError(apiError);
-        setGeneratedMessages(getFallbackMessages());
-      }
+        // Three card mode: load all three images
+        setIsImageLoading(true);
+        const imagePromises = cards.map(card => loadLocalImage(card));
 
-      // Handle image results (less critical)
-      if (imageUrl.status === 'fulfilled') {
-        setGeneratedImageUrl(imageUrl.value);
-      } else if (mode === 'single') {
-        const apiError = parseAPIError(imageUrl.reason);
-        setImageError(apiError);
+        const [messages, ...imageResults] = await Promise.allSettled([messagePromise, ...imagePromises]);
+
+        // Handle message results
+        if (messages.status === 'fulfilled') {
+          setGeneratedMessages(messages.value);
+        } else {
+          const apiError = parseAPIError(messages.reason);
+          setMessageError(apiError);
+          setGeneratedMessages(getFallbackMessages());
+        }
+
+        // Handle image results
+        const loadedImages = imageResults.map(result =>
+          result.status === 'fulfilled' ? result.value : null
+        );
+        setGeneratedImageUrls(loadedImages);
       }
 
     } catch (error) {
@@ -383,12 +404,33 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
                     <h4 className="text-xl font-semibold text-orange-800">{card.name}</h4>
                     <p className="text-amber-700 mt-1">{card.description}</p>
                   </div>
-                  <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-xl border border-amber-200/50 shadow-inner">
-                    {generatedMessages[index] && (
-                      <p className="text-slate-700 leading-relaxed whitespace-pre-line text-left text-base">
-                        {generatedMessages[index]}
-                      </p>
-                    )}
+
+                  <div className="flex flex-col md:flex-row gap-4 items-start">
+                    {/* Image on the left side for desktop, top for mobile */}
+                    <div className="w-full md:w-48 flex-shrink-0 mx-auto md:mx-0">
+                      <div className="aspect-[3/4] bg-amber-100 rounded-lg flex items-center justify-center border border-amber-200/50 shadow-inner overflow-hidden">
+                        {isImageLoading ? (
+                          <LoadingSpinner text="読み込み中..." />
+                        ) : generatedImageUrls[index] ? (
+                          <img
+                            src={generatedImageUrls[index]!}
+                            alt={`${card.name}の姿`}
+                            className="w-full h-full object-cover rounded-lg animate-fadeIn"
+                          />
+                        ) : (
+                          <div className="text-amber-700/50 p-4 text-center text-sm">画像</div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Message on the right side for desktop, bottom for mobile */}
+                    <div className="flex-1 bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-xl border border-amber-200/50 shadow-inner">
+                      {generatedMessages[index] && (
+                        <p className="text-slate-700 leading-relaxed whitespace-pre-line text-left text-base">
+                          {generatedMessages[index]}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
