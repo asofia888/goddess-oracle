@@ -4,14 +4,20 @@ import type { GoddessCardData, SavedReading, ReadingLevel, ReadingMode, Language
 import OracleCard from './components/OracleCard';
 import LanguageSelector from './components/LanguageSelector';
 import ErrorBoundary from './components/shared/ErrorBoundary';
+import SuspenseLoader from './components/shared/SuspenseLoader';
 import { getReadings, clearReadings } from './utils/storage';
 import { detectLanguage, getTranslation } from './utils/i18n';
 
-// Dynamic imports for heavy modal components
+// Dynamic imports for heavy modal components with prefetch
 const MessageModal = lazy(() => import('./components/MessageModal'));
 const JournalModal = lazy(() => import('./components/JournalModal'));
 const DisclaimerModal = lazy(() => import('./components/DisclaimerModal'));
 const ManualModal = lazy(() => import('./components/ManualModal'));
+
+// Preload functions for better UX
+const preloadMessageModal = () => import('./components/MessageModal');
+const preloadJournalModal = () => import('./components/JournalModal');
+const preloadManualModal = () => import('./components/ManualModal');
 
 // Fisher-Yates shuffle algorithm
 const shuffleArray = <T,>(array: T[]): T[] => {
@@ -124,11 +130,19 @@ const App: React.FC = () => {
     if (isAnimating || isModalOpen) return;
 
     if (readingMode === 'single') {
+      // Preload MessageModal before opening
+      preloadMessageModal();
       setSelectedCards([card]);
       setIsModalOpen(true);
     } else {
       if (selectedCards.length < 3 && !selectedCards.find(c => c.id === card.id)) {
-        setSelectedCards(prev => [...prev, card]);
+        const newSelection = [...selectedCards, card];
+        setSelectedCards(newSelection);
+
+        // Preload MessageModal when 2nd card is selected
+        if (newSelection.length === 2) {
+          preloadMessageModal();
+        }
       }
     }
   };
@@ -190,6 +204,8 @@ const App: React.FC = () => {
             />
             <button
               onClick={() => setIsManualOpen(true)}
+              onMouseEnter={preloadManualModal}
+              onFocus={preloadManualModal}
               className="p-2 rounded-full text-amber-700/80 hover:bg-amber-200/50 transition-colors"
               aria-label={t.manual}
             >
@@ -199,6 +215,8 @@ const App: React.FC = () => {
             </button>
             <button
               onClick={() => setIsJournalOpen(true)}
+              onMouseEnter={preloadJournalModal}
+              onFocus={preloadJournalModal}
               className="p-2 rounded-full text-amber-700/80 hover:bg-amber-200/50 transition-colors"
               aria-label="リーディング履歴を開く"
             >
@@ -218,6 +236,8 @@ const App: React.FC = () => {
             />
             <button
               onClick={() => setIsManualOpen(true)}
+              onMouseEnter={preloadManualModal}
+              onFocus={preloadManualModal}
               className="p-2 rounded-full text-amber-700/80 hover:bg-amber-200/50 transition-colors"
               aria-label={t.manual}
             >
@@ -227,6 +247,8 @@ const App: React.FC = () => {
             </button>
             <button
               onClick={() => setIsJournalOpen(true)}
+              onMouseEnter={preloadJournalModal}
+              onFocus={preloadJournalModal}
               className="p-2 rounded-full text-amber-700/80 hover:bg-amber-200/50 transition-colors"
               aria-label="リーディング履歴を開く"
             >
@@ -314,16 +336,21 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      <Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div></div>}>
+      <Suspense fallback={
+        <SuspenseLoader
+          variant="modal"
+          message={language === 'ja' ? '読み込み中...' : 'Loading...'}
+        />
+      }>
         <MessageModal cards={selectedCards} isOpen={isModalOpen} onClose={handleReset} readingLevel={readingLevel} language={language} t={t} onSave={handleSaveReading} />
       </Suspense>
-      <Suspense fallback={null}>
+      <Suspense fallback={<SuspenseLoader variant="minimal" />}>
         <JournalModal readings={readings} isOpen={isJournalOpen} onClose={() => setIsJournalOpen(false)} onClear={handleClearHistory} />
       </Suspense>
-      <Suspense fallback={null}>
+      <Suspense fallback={<SuspenseLoader variant="minimal" />}>
         <DisclaimerModal isOpen={isDisclaimerOpen} onClose={() => setIsDisclaimerOpen(false)} />
       </Suspense>
-      <Suspense fallback={null}>
+      <Suspense fallback={<SuspenseLoader variant="minimal" />}>
         <ManualModal isOpen={isManualOpen} onClose={() => setIsManualOpen(false)} />
       </Suspense>
 

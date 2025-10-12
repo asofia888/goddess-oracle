@@ -18,28 +18,54 @@ export default defineConfig(({ mode }) => {
       build: {
         rollupOptions: {
           output: {
-            manualChunks: {
-              // Separate vendor chunk for larger libraries
-              'google-genai': ['@google/genai'],
-              // Group modals together since they're lazy loaded
-              'modals': [
-                './components/MessageModal',
-                './components/JournalModal',
-                './components/DisclaimerModal',
-                './components/ManualModal'
-              ],
-              // Utils and constants
-              'utils': [
-                './utils/storage',
-                './utils/i18n',
-                './constants'
-              ]
-            }
+            manualChunks: (id) => {
+              // Separate vendor chunks
+              if (id.includes('node_modules')) {
+                if (id.includes('@google/genai')) {
+                  return 'vendor-google-genai';
+                }
+                if (id.includes('react') || id.includes('react-dom')) {
+                  return 'vendor-react';
+                }
+                return 'vendor-other';
+              }
+
+              // Separate card data by language for better caching
+              if (id.includes('constants/ja.ts')) {
+                return 'cards-ja';
+              }
+              if (id.includes('constants/en.ts')) {
+                return 'cards-en';
+              }
+
+              // Group modal components
+              if (id.includes('components/MessageModal') ||
+                  id.includes('components/JournalModal') ||
+                  id.includes('components/DisclaimerModal') ||
+                  id.includes('components/ManualModal')) {
+                return 'modals';
+              }
+
+              // Group utility functions
+              if (id.includes('utils/')) {
+                return 'utils';
+              }
+            },
+            // Optimize chunk file names
+            chunkFileNames: 'assets/[name]-[hash].js',
+            entryFileNames: 'assets/[name]-[hash].js',
+            assetFileNames: 'assets/[name]-[hash].[ext]'
           }
         },
-        chunkSizeWarningLimit: 300,
+        chunkSizeWarningLimit: 500,
         target: 'esnext',
-        minify: 'esbuild'
+        minify: 'esbuild',
+        // Enable CSS code splitting
+        cssCodeSplit: true,
+        // Optimize asset inlining
+        assetsInlineLimit: 4096,
+        // Enable source maps for production debugging (optional)
+        sourcemap: false
       }
     };
 });
