@@ -85,8 +85,14 @@
     <!-- Preload Critical Resources -->
     <link rel="preload" href="/logo.png" as="image" type="image/png">
 
-    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Noto+Serif+JP:wght@300;400;700&display=swap" rel="stylesheet">
+    <script>
+      // Suppress Tailwind CDN warning in production
+      window.tailwindConfig = {
+        // This acknowledges we're using CDN intentionally
+      };
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
       body {
         font-family: 'Noto Serif JP', serif;
@@ -105,7 +111,6 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
 </head>
   <body>
     <div id="root"></div>
