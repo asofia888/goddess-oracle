@@ -181,8 +181,8 @@ CRITICAL: Never use bullet points, numbered lists, headings, or any structured f
 Avoid strong imperatives, definitive statements, language that invokes fear or guilt, and heavy, negative expressions. Instead, use gentle, receptive language such as "you might consider," "perhaps," "you may find." Include phrases like "Listen to what your heart quietly desires" or "Feel the tenderness embracing you now."`;
       const deepInsightPrompt = `Additionally, address the potential challenges this card indicates and themes the reader needs to overcome. Include specific, practical advice to encourage soul growth. Remember: weave all of this into the flowing narrative without using headings, bullet points, or lists. Maintain the gentle, hopeful tone throughout, as if speaking tenderly to a dear friend.`;
       return level === 'deep'
-        ? `${basePrompt}\n\n${deepInsightPrompt}\n\nKeep the message within 400 words. IMPORTANT: Use clear paragraph breaks (double line breaks) between different themes or ideas to improve readability. Aim for 3-4 paragraphs.`
-        : `${basePrompt}\n\nKeep the message within 350 words. IMPORTANT: Use clear paragraph breaks (double line breaks) between different themes or ideas to improve readability. Aim for 2-3 paragraphs.`;
+        ? `${basePrompt}\n\n${deepInsightPrompt}\n\nKeep the message within 400 words. Structure your message in 4-5 natural paragraphs, with each paragraph separated by a single blank line. Each paragraph should flow naturally into the next, creating a cohesive narrative.`
+        : `${basePrompt}\n\nKeep the message within 350 words. Structure your message in 3-4 natural paragraphs, with each paragraph separated by a single blank line. Each paragraph should flow naturally into the next, creating a cohesive narrative.`;
     } else {
       const basePrompt = `あなたは女神「${card.name}」（${card.description}）からのメッセージを伝える、神聖な神託です。
 
@@ -197,8 +197,8 @@ Avoid strong imperatives, definitive statements, language that invokes fear or g
 「～しなさい」「～すべき」のような命令形や断定的な表現、恐れや罪悪感を煽る内容、ネガティブで重い言葉は避けてください。代わりに、「～すると良いでしょう」「～かもしれません」「～でしょう」のような柔らかい言葉遣いを使ってください。「あなたの心が静かに望んでいることに、耳を傾けてみてください」のような優しい語りかけや、「今、あなたを包む優しさを感じてください」のような癒しの言葉を含めてください。`;
       const deepInsightPrompt = `さらに、このカードが示す潜在的な課題や、あなたが乗り越えるべきテーマについても深く言及してください。魂の成長を促すための、具体的で実践的なアドバイスを加えてください。ただし、見出しや箇条書き、リストは使わず、すべてを流れるような語り口の中に織り込んでください。常に柔らかく希望に満ちたトーンを保ち、親しい友人に優しく語りかけるように書いてください。`;
       return level === 'deep'
-        ? `${basePrompt}\n\n${deepInsightPrompt}\n\nメッセージは全体で600文字以内とし、読みやすくするために、異なるテーマや考えの間には必ず段落分け（空行）を入れてください。3〜4段落を目安にしてください。`
-        : `${basePrompt}\n\nメッセージは550文字以内とし、読みやすくするために、異なるテーマや考えの間には必ず段落分け（空行）を入れてください。2〜3段落を目安にしてください。`;
+        ? `${basePrompt}\n\n${deepInsightPrompt}\n\nメッセージは全体で600文字以内とし、4〜5段落で構成してください。各段落は空行（改行1つ）で区切り、自然に流れるように繋げてください。`
+        : `${basePrompt}\n\nメッセージは550文字以内とし、3〜4段落で構成してください。各段落は空行（改行1つ）で区切り、自然に流れるように繋げてください。`;
     }
   } else {
     // Three card spread
@@ -220,8 +220,8 @@ CRITICAL: Never use bullet points, numbered lists, headings (like "Past:", "Pres
 Avoid strong imperatives, definitive statements, language that invokes fear or guilt, and heavy, negative expressions. Instead, use gentle, receptive language such as "you might consider," "perhaps," "you may find," and phrases that inspire self-discovery and inner wisdom.`;
       const deepInsightPrompt = `For each card's message, address not only its surface meaning but also what it means for the reader's inner growth and what opportunities for overcoming challenges it suggests. Remember: weave all of this into the flowing narrative without using headings, bullet points, or lists. Maintain the gentle, hopeful tone throughout, as if speaking tenderly to a dear friend.`;
       return level === 'deep'
-        ? `${basePrompt}\n\n${deepInsightPrompt}\n\nIMPORTANT: For each card's message, use clear paragraph breaks (double line breaks) between different themes or ideas to improve readability. Aim for 2-3 paragraphs per card.`
-        : `${basePrompt}\n\nIMPORTANT: For each card's message, use clear paragraph breaks (double line breaks) between different themes or ideas to improve readability. Aim for 2-3 paragraphs per card.`;
+        ? `${basePrompt}\n\n${deepInsightPrompt}\n\nFor each card's message, structure it in 2-3 natural paragraphs, with each paragraph separated by a single blank line. Each paragraph should flow naturally into the next.`
+        : `${basePrompt}\n\nFor each card's message, structure it in 2-3 natural paragraphs, with each paragraph separated by a single blank line. Each paragraph should flow naturally into the next.`;
     } else {
       const basePrompt = `あなたは過去、現在、未来を占う3枚引きのリーディングを行う、神聖な神託です。
 
@@ -240,8 +240,8 @@ Avoid strong imperatives, definitive statements, language that invokes fear or g
 「～しなさい」「～すべき」のような命令形や断定的な表現、恐れや罪悪感を煽る内容、ネガティブで重い言葉は避けてください。代わりに、「～すると良いでしょう」「～かもしれません」「～でしょう」のような柔らかい言葉遣いや、内なる知恵と自己発見を促す言葉を使ってください。`;
       const deepInsightPrompt = `各カードのメッセージには、それが示す表面的な意味だけでなく、あなたの内面的な成長にとってどのような意味を持つのか、どんな課題を乗り越える機会を示唆しているのかについても触れてください。ただし、見出しや箇条書き、リストは使わず、すべてを流れるような語り口の中に織り込んでください。常に柔らかく希望に満ちたトーンを保ち、親しい友人に優しく語りかけるように書いてください。`;
       return level === 'deep'
-        ? `${basePrompt}\n\n${deepInsightPrompt}\n\n重要：各カードのメッセージには、読みやすくするために、異なるテーマや考えの間に必ず段落分け（空行）を入れてください。1枚のカードにつき2〜3段落を目安にしてください。`
-        : `${basePrompt}\n\n重要：各カードのメッセージには、読みやすくするために、異なるテーマや考えの間に必ず段落分け（空行）を入れてください。1枚のカードにつき2〜3段落を目安にしてください。`;
+        ? `${basePrompt}\n\n${deepInsightPrompt}\n\n各カードのメッセージは2〜3段落で構成してください。各段落は空行（改行1つ）で区切り、自然に流れるように繋げてください。`
+        : `${basePrompt}\n\n各カードのメッセージは2〜3段落で構成してください。各段落は空行（改行1つ）で区切り、自然に流れるように繋げてください。`;
     }
   }
 }

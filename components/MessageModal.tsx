@@ -82,13 +82,8 @@ const SingleCardView: React.FC<{
         </div>
       ) : generatedMessage ? (
         <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-xl border border-amber-200/50 shadow-inner max-w-3xl mx-auto my-4">
-          <p className="text-slate-700 leading-loose whitespace-pre-line text-sm sm:text-base font-medium text-left" style={{ lineHeight: '1.8' }}>
-            {generatedMessage.split('\n').map((line, i) => (
-              <React.Fragment key={i}>
-                {line}
-                {i < generatedMessage.split('\n').length - 1 && <><br /><br /></>}
-              </React.Fragment>
-            ))}
+          <p className="text-slate-700 whitespace-pre-line text-sm sm:text-base font-medium text-left" style={{ lineHeight: '1.9' }}>
+            {generatedMessage}
           </p>
         </div>
       ) : null
@@ -393,13 +388,8 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
                   {/* Message below the image */}
                   <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-xl border border-amber-200/50 shadow-inner">
                     {generatedMessages[index] && (
-                      <p className="text-slate-700 leading-loose whitespace-pre-line text-left text-base sm:text-lg" style={{ lineHeight: '1.8' }}>
-                        {generatedMessages[index]!.split('\n').map((line, i) => (
-                          <React.Fragment key={i}>
-                            {line}
-                            {i < generatedMessages[index]!.split('\n').length - 1 && <><br /><br /></>}
-                          </React.Fragment>
-                        ))}
+                      <p className="text-slate-700 whitespace-pre-line text-left text-base sm:text-lg" style={{ lineHeight: '1.9' }}>
+                        {generatedMessages[index]}
                       </p>
                     )}
                   </div>
