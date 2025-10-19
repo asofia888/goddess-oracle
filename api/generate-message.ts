@@ -10,6 +10,7 @@ interface GenerateMessageRequest {
   readingLevel: 'normal' | 'deep';
   language: 'ja' | 'en';
   mode: 'single' | 'three';
+  fingerprint?: string; // Client fingerprint for additional security
 }
 
 interface GenerateMessageResponse {
@@ -17,25 +18,145 @@ interface GenerateMessageResponse {
   error?: string;
 }
 
-// Rate limiting in-memory store (for production, use Redis/Upstash)
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+// Enhanced rate limiting store with both IP and fingerprint tracking
+const rateLimitStore = new Map<string, { count: number; resetTime: number; violations: number }>();
+const fingerprintStore = new Map<string, { count: number; resetTime: number }>();
 
-function checkRateLimit(ip: string): boolean {
+// Security constants
+const RATE_LIMIT_WINDOW = 3600000; // 1 hour in milliseconds
+const MAX_REQUESTS_PER_HOUR = 20; // Reduced from 10/min to 20/hour for better security
+const MAX_VIOLATIONS = 3; // Temporary ban after 3 violations
+const BAN_DURATION = 86400000; // 24 hours ban
+
+// Allowed origins (configure based on your deployment)
+const ALLOWED_ORIGINS = [
+  'https://goddess-oracle.vercel.app',
+  'http://localhost:5173', // Development
+  'http://localhost:4173', // Preview
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '',
+].filter(Boolean);
+
+/**
+ * Enhanced rate limiting with IP and fingerprint tracking
+ */
+function checkRateLimit(ip: string, fingerprint?: string): { allowed: boolean; retryAfter?: number } {
   const now = Date.now();
-  const limit = rateLimitStore.get(ip);
 
-  if (!limit || now > limit.resetTime) {
-    // Reset: 10 requests per minute
-    rateLimitStore.set(ip, { count: 1, resetTime: now + 60000 });
-    return true;
+  // Check IP-based rate limit
+  const ipLimit = rateLimitStore.get(ip);
+
+  if (ipLimit) {
+    // Check if banned
+    if (ipLimit.violations >= MAX_VIOLATIONS && now < ipLimit.resetTime) {
+      return {
+        allowed: false,
+        retryAfter: Math.ceil((ipLimit.resetTime - now) / 1000)
+      };
+    }
+
+    // Reset if window expired
+    if (now > ipLimit.resetTime) {
+      rateLimitStore.set(ip, {
+        count: 1,
+        resetTime: now + RATE_LIMIT_WINDOW,
+        violations: 0
+      });
+      return { allowed: true };
+    }
+
+    // Check if limit exceeded
+    if (ipLimit.count >= MAX_REQUESTS_PER_HOUR) {
+      ipLimit.violations++;
+      ipLimit.resetTime = now + (ipLimit.violations >= MAX_VIOLATIONS ? BAN_DURATION : RATE_LIMIT_WINDOW);
+      return {
+        allowed: false,
+        retryAfter: Math.ceil((ipLimit.resetTime - now) / 1000)
+      };
+    }
+
+    ipLimit.count++;
+    return { allowed: true };
   }
 
-  if (limit.count >= 10) {
+  // First request from this IP
+  rateLimitStore.set(ip, {
+    count: 1,
+    resetTime: now + RATE_LIMIT_WINDOW,
+    violations: 0
+  });
+
+  // Check fingerprint-based rate limit if provided
+  if (fingerprint) {
+    const fpLimit = fingerprintStore.get(fingerprint);
+
+    if (fpLimit) {
+      if (now > fpLimit.resetTime) {
+        fingerprintStore.set(fingerprint, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+        return { allowed: true };
+      }
+
+      if (fpLimit.count >= MAX_REQUESTS_PER_HOUR) {
+        return {
+          allowed: false,
+          retryAfter: Math.ceil((fpLimit.resetTime - now) / 1000)
+        };
+      }
+
+      fpLimit.count++;
+    } else {
+      fingerprintStore.set(fingerprint, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    }
+  }
+
+  return { allowed: true };
+}
+
+/**
+ * Validate and sanitize card data
+ */
+function validateCardData(cards: any[]): boolean {
+  if (!Array.isArray(cards) || cards.length === 0 || cards.length > 3) {
     return false;
   }
 
-  limit.count++;
+  for (const card of cards) {
+    // Check required fields
+    if (!card.name || !card.description || !card.message) {
+      return false;
+    }
+
+    // Type validation
+    if (typeof card.name !== 'string' ||
+        typeof card.description !== 'string' ||
+        typeof card.message !== 'string') {
+      return false;
+    }
+
+    // Length validation (prevent injection attacks)
+    if (card.name.length > 100 ||
+        card.description.length > 500 ||
+        card.message.length > 1000) {
+      return false;
+    }
+
+    // Character validation (prevent code injection)
+    const dangerousPatterns = /<script|javascript:|onerror=|onclick=/i;
+    if (dangerousPatterns.test(card.name) ||
+        dangerousPatterns.test(card.description) ||
+        dangerousPatterns.test(card.message)) {
+      return false;
+    }
+  }
+
   return true;
+}
+
+/**
+ * Check origin to prevent CSRF
+ */
+function isValidOrigin(origin: string | undefined): boolean {
+  if (!origin) return false;
+  return ALLOWED_ORIGINS.some(allowed => origin === allowed || origin.startsWith(allowed));
 }
 
 function generatePrompt(
@@ -129,10 +250,27 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+  // CORS headers with origin validation
+  const origin = req.headers.origin;
+
+  if (isValidOrigin(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin as string);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  } else if (process.env.NODE_ENV === 'development') {
+    // Allow all origins in development only
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
 
   // Handle preflight
   if (req.method === 'OPTIONS') {
@@ -146,19 +284,51 @@ export default async function handler(
     return;
   }
 
-  // Rate limiting
-  const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || 'unknown';
-  if (!checkRateLimit(ip)) {
-    res.status(429).json({ error: 'Too many requests. Please try again later.' });
+  // Verify origin for POST requests (CSRF protection)
+  if (!isValidOrigin(origin) && process.env.NODE_ENV !== 'development') {
+    res.status(403).json({ error: 'Forbidden: Invalid origin' });
+    return;
+  }
+
+  // Extract IP with proper header fallback
+  const ip = (
+    req.headers['x-real-ip'] as string ||
+    (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+    req.socket.remoteAddress ||
+    'unknown'
+  );
+
+  // Get fingerprint from request body (if provided by client)
+  const fingerprint = req.body?.fingerprint;
+
+  // Enhanced rate limiting
+  const rateLimitResult = checkRateLimit(ip, fingerprint);
+  if (!rateLimitResult.allowed) {
+    res.setHeader('Retry-After', String(rateLimitResult.retryAfter || 3600));
+    res.status(429).json({
+      error: 'Too many requests. Please try again later.',
+      retryAfter: rateLimitResult.retryAfter
+    });
     return;
   }
 
   try {
     const { cards, readingLevel, language, mode } = req.body as GenerateMessageRequest;
 
-    // Validate input
-    if (!cards || !Array.isArray(cards) || cards.length === 0) {
-      res.status(400).json({ error: 'Invalid cards data' });
+    // Enhanced input validation with sanitization
+    if (!validateCardData(cards)) {
+      res.status(400).json({ error: 'Invalid or malicious card data' });
+      return;
+    }
+
+    // Validate mode and card count consistency
+    if (mode === 'single' && cards.length !== 1) {
+      res.status(400).json({ error: 'Single mode requires exactly 1 card' });
+      return;
+    }
+
+    if (mode === 'three' && cards.length !== 3) {
+      res.status(400).json({ error: 'Three card mode requires exactly 3 cards' });
       return;
     }
 
@@ -180,8 +350,9 @@ export default async function handler(
     // Check API key exists
     const apiKey = process.env.GOOGLE_API_KEY;
     if (!apiKey) {
-      console.error('GOOGLE_API_KEY not configured');
-      res.status(500).json({ error: 'Server configuration error' });
+      // Don't expose internal configuration details
+      console.error('[SECURITY] GOOGLE_API_KEY not configured');
+      res.status(500).json({ error: 'Service temporarily unavailable' });
       return;
     }
 
@@ -224,7 +395,15 @@ export default async function handler(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Google AI API error:', errorText);
+      // Log detailed error server-side only
+      console.error('[API ERROR] Google AI API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText,
+        timestamp: new Date().toISOString()
+      });
+
+      // Return generic error to client (don't expose API details)
       res.status(500).json({ error: 'Failed to generate message' });
       return;
     }
@@ -233,7 +412,11 @@ export default async function handler(
     const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!generatedText) {
-      res.status(500).json({ error: 'No message generated' });
+      console.error('[API ERROR] No message generated:', {
+        data: JSON.stringify(data).substring(0, 200),
+        timestamp: new Date().toISOString()
+      });
+      res.status(500).json({ error: 'Failed to generate message' });
       return;
     }
 
@@ -245,9 +428,18 @@ export default async function handler(
       try {
         const parsed = JSON.parse(generatedText);
         messages = [parsed.past, parsed.present, parsed.future];
+
+        // Validate parsed messages
+        if (!messages.every(msg => typeof msg === 'string' && msg.length > 0)) {
+          throw new Error('Invalid message format in parsed response');
+        }
       } catch (e) {
-        console.error('Failed to parse three-card response:', e);
-        res.status(500).json({ error: 'Failed to parse response' });
+        console.error('[API ERROR] Failed to parse three-card response:', {
+          error: e instanceof Error ? e.message : String(e),
+          responsePreview: generatedText.substring(0, 200),
+          timestamp: new Date().toISOString()
+        });
+        res.status(500).json({ error: 'Failed to generate message' });
         return;
       }
     }
@@ -255,7 +447,14 @@ export default async function handler(
     const result: GenerateMessageResponse = { messages };
     res.status(200).json(result);
   } catch (error) {
-    console.error('Error in generate-message handler:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    // Log detailed error server-side
+    console.error('[API ERROR] Unexpected error in generate-message handler:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+
+    // Return generic error to client (prevent information leakage)
+    res.status(500).json({ error: 'Service temporarily unavailable' });
   }
 }
