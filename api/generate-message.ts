@@ -47,40 +47,134 @@ function generatePrompt(
   if (mode === 'single') {
     const card = cards[0];
     if (language === 'en') {
-      const basePrompt = `You are a sacred oracle. Please deliver a message from the goddess "${card.name}" (${card.description}). The original message is: "${card.message}". Based on this information, generate a deeper, insightful, and personalized oracle message. The tone should be graceful, empathetic, and nurturing, as if the goddess is speaking directly to the reader. Avoid strong imperatives or definitive statements. Instead, use gentle, receptive language such as "you might consider," "perhaps," or "you may find."`;
-      const deepInsightPrompt = `Additionally, address the potential challenges this card indicates and themes the reader needs to overcome. Include specific, practical advice to encourage soul growth.`;
+      const basePrompt = `You are a sacred oracle delivering a message from the goddess "${card.name}" (${card.description}).
+
+【Tone and Style】
+- Use warm, gentle language that brings instant comfort and hope
+- Focus on healing and inspiration, not preaching
+- Maintain a universal spiritual perspective without strong religious overtones
+
+【Message Characteristics】
+- Believe in the reader's inner light and potential, gently encouraging them
+- Convey the goddess's love and wisdom in a way that resonates with daily life
+- Communicate with deep empathy and compassion
+- Guide readers to discover their own answers
+
+The original message is: "${card.message}". Based on this, generate a deeper, insightful, and personalized oracle message.
+
+【Avoid】
+- Strong imperatives or definitive statements
+- Language that invokes fear or guilt
+- Heavy, negative expressions
+
+【Use Instead】
+- Gentle, receptive language: "you might consider," "perhaps," "you may find"
+- Phrases like: "Listen to what your heart quietly desires"
+- Expressions such as: "Feel the tenderness embracing you now"`;
+      const deepInsightPrompt = `Additionally, address the potential challenges this card indicates and themes the reader needs to overcome. Include specific, practical advice to encourage soul growth, always maintaining the gentle, hopeful tone.`;
       return level === 'deep'
-        ? `${basePrompt} ${deepInsightPrompt} Keep the message within 400 words and use natural paragraph breaks for readability.`
-        : `${basePrompt} Keep the message within 350 words and use natural paragraph breaks for readability.`;
+        ? `${basePrompt}\n\n${deepInsightPrompt}\n\nKeep the message within 400 words and use natural paragraph breaks for readability.`
+        : `${basePrompt}\n\nKeep the message within 350 words and use natural paragraph breaks for readability.`;
     } else {
-      const basePrompt = `あなたは神聖な神託です。女神「${card.name}」（${card.description}）からのメッセージを伝えてください。元のメッセージは「${card.message}」です。この情報に基づき、より深く、洞察に満ちた、パーソナライズされた神託のメッセージを生成してください。口調は、女神が直接語りかけるように、優雅で、共感的で、包み込むような女性的なものにしてください。「～しなさい」や「～だろう」のような強い命令形や断定的な表現は避け、「～すると良いでしょう」「～かもしれません」「～でしょう」のように、柔らかく、受け入れやすい言葉遣いを徹底してください。`;
-      const deepInsightPrompt = `さらに、このカードが示す潜在的な課題や、あなたが乗り越えるべきテーマについても深く言及してください。魂の成長を促すための、具体的で実践的なアドバイスを加えてください。`;
+      const basePrompt = `あなたは女神「${card.name}」（${card.description}）からのメッセージを伝える、神聖な神託です。
+
+【トーンとスタイル】
+- 柔らかく温かい言葉で、読んだ瞬間に安心感と希望が広がるように
+- 説教的にならず、癒しとインスピレーションを中心に
+- 宗教的色合いは強くせず、普遍的なスピリチュアル観で
+
+【メッセージの特徴】
+- 読者の内なる光や可能性を信じ、そっと背中を押す
+- 女神の愛と知恵を、日常に寄り添う形で伝える
+- 深い共感と思いやりを込めて
+- 読者が自分自身の答えに気づけるよう導く
+
+元のメッセージは「${card.message}」です。この情報に基づき、より深く、洞察に満ちた、パーソナライズされた神託のメッセージを生成してください。
+
+【避けるべき表現】
+- 「～しなさい」「～すべき」のような命令形や断定的な表現
+- 恐れや罪悪感を煽る内容
+- ネガティブで重い言葉
+
+【推奨される表現】
+- 「～すると良いでしょう」「～かもしれません」「～でしょう」のような柔らかい言葉遣い
+- 「あなたの心が静かに望んでいることに、耳を傾けてみてください」のような優しい語りかけ
+- 「今、あなたを包む優しさを感じてください」のような癒しの言葉`;
+      const deepInsightPrompt = `さらに、このカードが示す潜在的な課題や、あなたが乗り越えるべきテーマについても深く言及してください。魂の成長を促すための、具体的で実践的なアドバイスを加えてください。その際も、常に柔らかく希望に満ちたトーンを保ってください。`;
       return level === 'deep'
-        ? `${basePrompt} ${deepInsightPrompt} メッセージは全体で600文字以内とし、適度に改行を入れて読みやすくしてください。`
-        : `${basePrompt} メッセージは550文字以内とし、適度に改行を入れて読みやすくしてください。`;
+        ? `${basePrompt}\n\n${deepInsightPrompt}\n\nメッセージは全体で600文字以内とし、適度に改行を入れて読みやすくしてください。`
+        : `${basePrompt}\n\nメッセージは550文字以内とし、適度に改行を入れて読みやすくしてください。`;
     }
   } else {
     // Three card spread
     if (language === 'en') {
       const basePrompt = `You are a sacred oracle performing a three-card reading for past, present, and future.
+
+【The Cards】
 The Past card is "${cards[0].name}" (${cards[0].description}).
 The Present card is "${cards[1].name}" (${cards[1].description}).
 The Future card is "${cards[2].name}" (${cards[2].description}).
-Interpret the combination of these three cards and generate deep, insightful messages for each card according to its position (past, present, future). The three messages should relate to each other and flow together like a single narrative. The tone should be graceful, empathetic, and nurturing, as if the goddess is speaking directly to the reader. Avoid strong imperatives or definitive statements. Instead, use gentle, receptive language such as "you might consider," "perhaps," or "you may find."`;
-      const deepInsightPrompt = `For each card's message, address not only its surface meaning but also what it means for the reader's inner growth and what opportunities for overcoming challenges it suggests.`;
+
+【Tone and Style】
+- Use warm, gentle language that brings instant comfort and hope
+- Focus on healing and inspiration, not preaching
+- Maintain a universal spiritual perspective without strong religious overtones
+
+【Message Characteristics】
+- Believe in the reader's inner light and potential, gently encouraging them
+- Convey the goddess's love and wisdom in a way that resonates with daily life
+- Communicate with deep empathy and compassion
+- Guide readers to discover their own answers
+- The three messages should relate to each other and flow together like a single narrative
+
+【Avoid】
+- Strong imperatives or definitive statements
+- Language that invokes fear or guilt
+- Heavy, negative expressions
+
+【Use Instead】
+- Gentle, receptive language: "you might consider," "perhaps," "you may find"
+- Phrases that inspire self-discovery and inner wisdom
+
+Interpret the combination of these three cards and generate deep, insightful messages for each card according to its position (past, present, future).`;
+      const deepInsightPrompt = `For each card's message, address not only its surface meaning but also what it means for the reader's inner growth and what opportunities for overcoming challenges it suggests, always maintaining the gentle, hopeful tone.`;
       return level === 'deep'
-        ? `${basePrompt} ${deepInsightPrompt} Use natural paragraph breaks to make each message readable.`
-        : `${basePrompt} Use natural paragraph breaks to make each message readable.`;
+        ? `${basePrompt}\n\n${deepInsightPrompt}\n\nUse natural paragraph breaks to make each message readable.`
+        : `${basePrompt}\n\nUse natural paragraph breaks to make each message readable.`;
     } else {
-      const basePrompt = `あなたは神聖な神託です。過去、現在、未来を占う3枚引きのリーディングを行います。
+      const basePrompt = `あなたは過去、現在、未来を占う3枚引きのリーディングを行う、神聖な神託です。
+
+【カード】
 過去のカードは「${cards[0].name}」（${cards[0].description}）。
 現在のカードは「${cards[1].name}」（${cards[1].description}）。
 未来のカードは「${cards[2].name}」（${cards[2].description}）。
-これら3枚のカードの組み合わせを解釈し、それぞれのカードについて、その位置（過去、現在、未来）に応じた、深く洞察に満ちたメッセージを生成してください。3つのメッセージは互いに関連し合い、一つの物語のように繋がるようにしてください。口調は、女神が直接語りかけるように、優雅で、共感的で、包み込むような女性的なものにしてください。「～しなさい」や「～だろう」のような強い命令形や断定的な表現は避け、「～すると良いでしょう」「～かもしれません」「～でしょう」のように、柔らかく、受け入れやすい言葉遣いを徹底してください。`;
-      const deepInsightPrompt = `各カードのメッセージには、それが示す表面的な意味だけでなく、あなたの内面的な成長にとってどのような意味を持つのか、どんな課題を乗り越える機会を示唆しているのかについても触れてください。`;
+
+【トーンとスタイル】
+- 柔らかく温かい言葉で、読んだ瞬間に安心感と希望が広がるように
+- 説教的にならず、癒しとインスピレーションを中心に
+- 宗教的色合いは強くせず、普遍的なスピリチュアル観で
+
+【メッセージの特徴】
+- 読者の内なる光や可能性を信じ、そっと背中を押す
+- 女神の愛と知恵を、日常に寄り添う形で伝える
+- 深い共感と思いやりを込めて
+- 読者が自分自身の答えに気づけるよう導く
+- 3つのメッセージは互いに関連し合い、一つの物語のように繋がるようにする
+
+【避けるべき表現】
+- 「～しなさい」「～すべき」のような命令形や断定的な表現
+- 恐れや罪悪感を煽る内容
+- ネガティブで重い言葉
+
+【推奨される表現】
+- 「～すると良いでしょう」「～かもしれません」「～でしょう」のような柔らかい言葉遣い
+- 内なる知恵と自己発見を促す言葉
+
+これら3枚のカードの組み合わせを解釈し、それぞれのカードについて、その位置（過去、現在、未来）に応じた、深く洞察に満ちたメッセージを生成してください。`;
+      const deepInsightPrompt = `各カードのメッセージには、それが示す表面的な意味だけでなく、あなたの内面的な成長にとってどのような意味を持つのか、どんな課題を乗り越える機会を示唆しているのかについても触れてください。その際も、常に柔らかく希望に満ちたトーンを保ってください。`;
       return level === 'deep'
-        ? `${basePrompt} ${deepInsightPrompt} 各メッセージは、読みやすくなるように適度に改行を入れてください。`
-        : `${basePrompt} 各メッセージは、読みやすくなるように適度に改行を入れてください。`;
+        ? `${basePrompt}\n\n${deepInsightPrompt}\n\n各メッセージは、読みやすくなるように適度に改行を入れてください。`
+        : `${basePrompt}\n\n各メッセージは、読みやすくなるように適度に改行を入れてください。`;
     }
   }
 }
