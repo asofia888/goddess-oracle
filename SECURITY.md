@@ -4,20 +4,27 @@
 
 This document outlines the security measures implemented for the Goddess Oracle application.
 
-### 1. Rate Limiting
+### 1. Rate Limiting (Upstash Redis)
 
 **Implementation:**
-- **IP-based rate limiting**: 20 requests per hour per IP address
+- **Distributed rate limiting** via Upstash Redis — works correctly across serverless function instances
+- **IP-based rate limiting**: 20 requests per hour per IP address (sliding window)
 - **Fingerprint-based rate limiting**: Optional client fingerprint tracking for additional protection
-- **Progressive penalties**: 3 violations result in a 24-hour ban
-- **Automatic reset**: Limits reset every hour
+- **Progressive penalties**: 3 violations result in a 24-hour ban (stored in Redis with TTL)
+- **Automatic reset**: Limits reset via sliding window; violations reset after 1 hour
+- **Fallback**: In-memory rate limiting for local development when Redis is not configured
 
 **Configuration:**
 ```typescript
-const RATE_LIMIT_WINDOW = 3600000; // 1 hour
 const MAX_REQUESTS_PER_HOUR = 20;
 const MAX_VIOLATIONS = 3;
-const BAN_DURATION = 86400000; // 24 hours
+const BAN_DURATION_SECONDS = 86400; // 24 hours
+```
+
+**Required Environment Variables:**
+```
+UPSTASH_REDIS_REST_URL=https://your-redis.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your_token_here
 ```
 
 ### 2. Input Validation & Sanitization
@@ -93,11 +100,9 @@ Referrer-Policy: strict-origin-when-cross-origin
 2. **Environment Variables:**
    Ensure `GOOGLE_API_KEY` is set in Vercel environment variables
 
-3. **Monitor Rate Limits:**
-   Consider upgrading to Redis/Upstash for distributed rate limiting:
-   ```bash
-   npm install @upstash/ratelimit @upstash/redis
-   ```
+3. **Configure Upstash Redis:**
+   Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in Vercel environment variables.
+   Create a free database at [console.upstash.com](https://console.upstash.com/).
 
 4. **Enable Logging:**
    Consider integrating error tracking (e.g., Sentry):

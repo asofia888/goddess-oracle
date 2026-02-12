@@ -1,4 +1,5 @@
 import React from 'react';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 interface ModalProps {
   isOpen: boolean;
@@ -6,6 +7,7 @@ interface ModalProps {
   children: React.ReactNode;
   className?: string;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '5xl';
+  ariaLabelledBy?: string;
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -13,8 +15,11 @@ const Modal: React.FC<ModalProps> = ({
   onClose,
   children,
   className = '',
-  maxWidth = 'lg'
+  maxWidth = 'lg',
+  ariaLabelledBy
 }) => {
+  const focusTrapRef = useFocusTrap(isOpen, onClose);
+
   if (!isOpen) return null;
 
   const maxWidthClasses = {
@@ -28,7 +33,11 @@ const Modal: React.FC<ModalProps> = ({
 
   return (
     <div
+      ref={focusTrapRef}
       className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity duration-300 ease-in-out animate-fadeInModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={ariaLabelledBy}
       onClick={onClose}
     >
       <div
@@ -37,18 +46,6 @@ const Modal: React.FC<ModalProps> = ({
       >
         {children}
       </div>
-      <style>{`
-        @keyframes fadeInModal {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes zoomIn {
-          from { opacity: 0; transform: scale(0.9); }
-          to { opacity: 1; transform: scale(1); }
-        }
-        .animate-fadeInModal { animation: fadeInModal 0.3s ease-in-out; }
-        .animate-zoomIn { animation: zoomIn 0.3s ease-out; }
-      `}</style>
     </div>
   );
 };

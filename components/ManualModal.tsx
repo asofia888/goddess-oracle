@@ -1,4 +1,5 @@
 import React from 'react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface ManualModalProps {
   isOpen: boolean;
@@ -6,13 +7,19 @@ interface ManualModalProps {
 }
 
 const ManualModal: React.FC<ManualModalProps> = ({ isOpen, onClose }) => {
+  const focusTrapRef = useFocusTrap(isOpen, onClose);
+
   if (!isOpen) {
     return null;
   }
 
   return (
     <div
+      ref={focusTrapRef}
       className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity duration-300 ease-in-out animate-fadeInModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="manual-modal-title"
       onClick={onClose}
     >
       <div
@@ -20,7 +27,7 @@ const ManualModal: React.FC<ManualModalProps> = ({ isOpen, onClose }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <header className="p-4 sm:p-6 border-b border-amber-200/50 text-center relative">
-          <h2 className="text-2xl sm:text-3xl font-bold text-orange-800 tracking-wide">ご利用マニュアル</h2>
+          <h2 id="manual-modal-title" className="text-2xl sm:text-3xl font-bold text-orange-800 tracking-wide">ご利用マニュアル</h2>
           <button onClick={onClose} className="absolute top-3 right-3 p-2 text-amber-700/80 hover:bg-amber-200/50 rounded-full" aria-label="閉じる">
              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -30,7 +37,7 @@ const ManualModal: React.FC<ManualModalProps> = ({ isOpen, onClose }) => {
 
         <div className="p-4 sm:p-6 overflow-y-auto flex-grow text-stone-700 space-y-4 text-sm leading-relaxed">
             <p>この度は、「女神のオラクルガイダンス」をご利用いただき、誠にありがとうございます。このアプリは、48人の女神たちの叡智を通じて、あなたの心に寄り添うメッセージをお届けするツールです。</p>
-            
+
             <h3 className="text-lg font-bold text-amber-800 pt-2">1. リーディングモードを選択する</h3>
             <p>アプリを開くと、まず2つのリーディングモードが表示されます。目的に合わせてお好きな方をお選びください。</p>
             <ul className="list-disc list-inside space-y-2 pl-4">
@@ -55,7 +62,7 @@ const ManualModal: React.FC<ManualModalProps> = ({ isOpen, onClose }) => {
             <h3 className="text-lg font-bold text-amber-800 pt-2">ご注意</h3>
             <p>本アプリが提供するリーディング結果やメッセージは、エンターテイメントを目的としています。表示される内容は、医学、法律、金融など、専門的な助言に代わるものではありません。人生における重要な決定は、ご自身の判断と責任において行ってください。</p>
         </div>
-        
+
         <footer className="p-4 sm:p-6 border-t border-amber-200/50 text-right">
             <button
               onClick={onClose}
@@ -65,12 +72,6 @@ const ManualModal: React.FC<ManualModalProps> = ({ isOpen, onClose }) => {
             </button>
           </footer>
       </div>
-      <style>{`
-        @keyframes fadeInModal { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        .animate-fadeInModal { animation: fadeInModal 0.3s ease-in-out; }
-        .animate-zoomIn { animation: zoomIn 0.3s ease-out; }
-      `}</style>
     </div>
   );
 };

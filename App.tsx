@@ -194,6 +194,9 @@ const App: React.FC = () => {
   return (
     <ErrorBoundary language={language}>
     <div className="min-h-screen bg-violet-50 text-slate-800 p-4 sm:p-8 overflow-hidden">
+      <a href="#card-grid" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-white focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg focus:text-amber-800 focus:font-semibold">
+        {language === 'ja' ? 'カード一覧へスキップ' : 'Skip to cards'}
+      </a>
       <header className="text-center mb-4 animate-fadeIn">
         {/* Mobile layout: Controls above logo */}
         <div className="flex justify-center mb-4 sm:hidden">
@@ -293,7 +296,7 @@ const App: React.FC = () => {
         </button>
       </div>
       
-      <p className="text-center text-lg text-amber-800/80 mb-6 h-8 transition-opacity duration-300">
+      <p className="text-center text-lg text-amber-800/80 mb-6 h-8 transition-opacity duration-300" aria-live="polite">
         {getInstructionText()}
       </p>
 
@@ -311,7 +314,7 @@ const App: React.FC = () => {
 
       <main>
         <div className="container mx-auto">
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-11 gap-3 sm:gap-4 justify-center">
+          <div id="card-grid" className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-11 gap-3 sm:gap-4 justify-center" role="group" aria-label={language === 'ja' ? 'オラクルカード一覧' : 'Oracle cards'}>
             {cards.map((card, index) => (
               <div
                 key={card.id}
@@ -366,55 +369,6 @@ const App: React.FC = () => {
           {t.disclaimer}
         </button>
       </footer>
-       <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        .animate-fadeIn { animation: fadeIn 1s ease-in-out; }
-
-        @keyframes pulse-draw {
-          0%, 100% {
-            transform: scale(1);
-            box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.5);
-          }
-          50% {
-            transform: scale(1.05);
-            box-shadow: 0 0 0 12px rgba(217, 119, 6, 0);
-          }
-        }
-        .animate-pulse-draw {
-          animation: pulse-draw 2.5s infinite;
-        }
-
-        @keyframes shuffle-out {
-          from {
-            transform: translate(0, 0) rotate(0) scale(1);
-            opacity: 1;
-          }
-          to {
-            transform: translate(var(--translateX), var(--translateY)) rotate(var(--rotate-end)) scale(0);
-            opacity: 0;
-          }
-        }
-        .animate-shuffle-out {
-          animation: shuffle-out 1s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
-        }
-
-        @keyframes shuffle-in {
-          from {
-            transform: translateY(30px) scale(0.8);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0) scale(1);
-            opacity: 1;
-          }
-        }
-        .animate-shuffle-in {
-          animation: shuffle-in 0.5s ease-out backwards;
-        }
-      `}</style>
     </div>
     </ErrorBoundary>
   );

@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+/* ===== Custom Fonts ===== */
+body {
+  font-family: 'Noto Serif JP', serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Cinzel', serif;
+}
+
+/* ===== Custom Animations ===== */
+
+/* Fade in */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fadeIn {
+  animation: fadeIn 1s ease-in-out;
+}
+
+/* Pulse draw button */
+@keyframes pulse-draw {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.5);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 12px rgba(217, 119, 6, 0);
+  }
+}
+.animate-pulse-draw {
+  animation: pulse-draw 2.5s infinite;
+}
+
+/* Card shuffle out */
+@keyframes shuffle-out {
+  from {
+    transform: translate(0, 0) rotate(0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translate(var(--translateX), var(--translateY)) rotate(var(--rotate-end)) scale(0);
+    opacity: 0;
+  }
+}
+.animate-shuffle-out {
+  animation: shuffle-out 1s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
+}
+
+/* Card shuffle in */
+@keyframes shuffle-in {
+  from {
+    transform: translateY(30px) scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+.animate-shuffle-in {
+  animation: shuffle-in 0.5s ease-out backwards;
+}
+
+/* Modal fade in */
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fadeInModal {
+  animation: fadeInModal 0.3s ease-in-out;
+}
+
+/* Modal zoom in */
+@keyframes zoomIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-zoomIn {
+  animation: zoomIn 0.3s ease-out;
+}
+
+/* ===== Accessibility ===== */
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fadeIn,
+  .animate-pulse-draw,
+  .animate-shuffle-out,
+  .animate-shuffle-in,
+  .animate-fadeInModal,
+  .animate-zoomIn {
+    animation: none !important;
+  }
+}

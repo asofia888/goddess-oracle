@@ -57,7 +57,7 @@ const SingleCardView: React.FC<{
       )}
     </div>
 
-    <h2 className="text-4xl sm:text-5xl font-bold text-orange-800 tracking-wide">{card.name}</h2>
+    <h2 id="message-modal-title" className="text-4xl sm:text-5xl font-bold text-orange-800 tracking-wide">{card.name}</h2>
     <p className="text-md sm:text-lg text-amber-700 mt-2 italic">
       {card.description}
     </p>
@@ -292,7 +292,7 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
 
   if (cards.length === 1) {
     return (
-      <Modal isOpen={isOpen} onClose={onClose}>
+      <Modal isOpen={isOpen} onClose={onClose} ariaLabelledBy="message-modal-title">
         <div className="bg-white rounded-xl shadow-2xl w-full">
           <div className="p-6 sm:p-8">
             <SingleCardView
@@ -335,11 +335,11 @@ const MessageModal: React.FC<MessageModalProps> = ({ cards, isOpen, onClose, rea
 
   // Three card layout (simplified for now)
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={onClose} ariaLabelledBy="three-card-modal-title">
       <div className="bg-white rounded-xl shadow-2xl w-full">
         <div className="p-6 sm:p-8">
           <div className="text-center mb-8">
-            <h2 className="text-3xl sm:text-4xl font-bold text-orange-800 tracking-wide mb-2">
+            <h2 id="three-card-modal-title" className="text-3xl sm:text-4xl font-bold text-orange-800 tracking-wide mb-2">
               {t.threeCardSpread}
             </h2>
           </div>

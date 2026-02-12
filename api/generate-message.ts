@@ -1,4 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 
 // Google Generative AI types (minimal to avoid importing full package)
 interface GenerateMessageRequest {
@@ -18,15 +20,10 @@ interface GenerateMessageResponse {
   error?: string;
 }
 
-// Enhanced rate limiting store with both IP and fingerprint tracking
-const rateLimitStore = new Map<string, { count: number; resetTime: number; violations: number }>();
-const fingerprintStore = new Map<string, { count: number; resetTime: number }>();
-
 // Security constants
-const RATE_LIMIT_WINDOW = 3600000; // 1 hour in milliseconds
-const MAX_REQUESTS_PER_HOUR = 20; // Reduced from 10/min to 20/hour for better security
-const MAX_VIOLATIONS = 3; // Temporary ban after 3 violations
-const BAN_DURATION = 86400000; // 24 hours ban
+const MAX_REQUESTS_PER_HOUR = 20;
+const MAX_VIOLATIONS = 3;
+const BAN_DURATION_SECONDS = 86400; // 24 hours
 
 // Allowed origins (configure based on your deployment)
 const ALLOWED_ORIGINS = [
@@ -36,75 +33,111 @@ const ALLOWED_ORIGINS = [
   process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '',
 ].filter(Boolean);
 
-/**
- * Enhanced rate limiting with IP and fingerprint tracking
- */
-function checkRateLimit(ip: string, fingerprint?: string): { allowed: boolean; retryAfter?: number } {
+// --- Upstash Redis Rate Limiting ---
+// Initialize Redis and Ratelimit only when environment variables are available
+function createRatelimiter() {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (!url || !token) {
+    return null;
+  }
+
+  const redis = Redis.fromEnv();
+
+  const limiter = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(MAX_REQUESTS_PER_HOUR, '1 h'),
+    prefix: 'goddess-oracle:ratelimit',
+  });
+
+  return { redis, limiter };
+}
+
+// Lazy singleton — created once per cold start
+let _upstash: ReturnType<typeof createRatelimiter> | undefined;
+function getUpstash() {
+  if (_upstash === undefined) {
+    _upstash = createRatelimiter();
+  }
+  return _upstash;
+}
+
+// In-memory fallback for local development (when Redis is not configured)
+const memoryStore = new Map<string, { count: number; resetTime: number; violations: number }>();
+
+function checkRateLimitMemory(ip: string): { allowed: boolean; retryAfter?: number } {
   const now = Date.now();
+  const entry = memoryStore.get(ip);
 
-  // Check IP-based rate limit
-  const ipLimit = rateLimitStore.get(ip);
-
-  if (ipLimit) {
-    // Check if banned
-    if (ipLimit.violations >= MAX_VIOLATIONS && now < ipLimit.resetTime) {
-      return {
-        allowed: false,
-        retryAfter: Math.ceil((ipLimit.resetTime - now) / 1000)
-      };
+  if (entry) {
+    if (entry.violations >= MAX_VIOLATIONS && now < entry.resetTime) {
+      return { allowed: false, retryAfter: Math.ceil((entry.resetTime - now) / 1000) };
     }
-
-    // Reset if window expired
-    if (now > ipLimit.resetTime) {
-      rateLimitStore.set(ip, {
-        count: 1,
-        resetTime: now + RATE_LIMIT_WINDOW,
-        violations: 0
-      });
+    if (now > entry.resetTime) {
+      memoryStore.set(ip, { count: 1, resetTime: now + 3600000, violations: 0 });
       return { allowed: true };
     }
-
-    // Check if limit exceeded
-    if (ipLimit.count >= MAX_REQUESTS_PER_HOUR) {
-      ipLimit.violations++;
-      ipLimit.resetTime = now + (ipLimit.violations >= MAX_VIOLATIONS ? BAN_DURATION : RATE_LIMIT_WINDOW);
-      return {
-        allowed: false,
-        retryAfter: Math.ceil((ipLimit.resetTime - now) / 1000)
-      };
+    if (entry.count >= MAX_REQUESTS_PER_HOUR) {
+      entry.violations++;
+      entry.resetTime = now + (entry.violations >= MAX_VIOLATIONS ? BAN_DURATION_SECONDS * 1000 : 3600000);
+      return { allowed: false, retryAfter: Math.ceil((entry.resetTime - now) / 1000) };
     }
-
-    ipLimit.count++;
+    entry.count++;
     return { allowed: true };
   }
 
-  // First request from this IP
-  rateLimitStore.set(ip, {
-    count: 1,
-    resetTime: now + RATE_LIMIT_WINDOW,
-    violations: 0
-  });
+  memoryStore.set(ip, { count: 1, resetTime: now + 3600000, violations: 0 });
+  return { allowed: true };
+}
 
-  // Check fingerprint-based rate limit if provided
+/**
+ * Distributed rate limiting with Upstash Redis.
+ * Falls back to in-memory rate limiting when Redis is not configured.
+ */
+async function checkRateLimit(ip: string, fingerprint?: string): Promise<{ allowed: boolean; retryAfter?: number }> {
+  const upstash = getUpstash();
+
+  // Fallback to in-memory for local development
+  if (!upstash) {
+    return checkRateLimitMemory(ip);
+  }
+
+  const { redis, limiter } = upstash;
+
+  // Check if IP is banned
+  const banKey = `goddess-oracle:ban:${ip}`;
+  const isBanned = await redis.get(banKey);
+  if (isBanned) {
+    const ttl = await redis.ttl(banKey);
+    return { allowed: false, retryAfter: ttl > 0 ? ttl : BAN_DURATION_SECONDS };
+  }
+
+  // Check IP-based rate limit
+  const { success, reset } = await limiter.limit(ip);
+
+  if (!success) {
+    // Track violations
+    const violationKey = `goddess-oracle:violations:${ip}`;
+    const violations = await redis.incr(violationKey);
+    await redis.expire(violationKey, 3600); // Violations reset after 1 hour
+
+    if (violations >= MAX_VIOLATIONS) {
+      // Ban for 24 hours
+      await redis.set(banKey, '1', { ex: BAN_DURATION_SECONDS });
+      return { allowed: false, retryAfter: BAN_DURATION_SECONDS };
+    }
+
+    const retryAfter = Math.ceil((reset - Date.now()) / 1000);
+    return { allowed: false, retryAfter: retryAfter > 0 ? retryAfter : 3600 };
+  }
+
+  // Also check fingerprint if provided
   if (fingerprint) {
-    const fpLimit = fingerprintStore.get(fingerprint);
-
-    if (fpLimit) {
-      if (now > fpLimit.resetTime) {
-        fingerprintStore.set(fingerprint, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-        return { allowed: true };
-      }
-
-      if (fpLimit.count >= MAX_REQUESTS_PER_HOUR) {
-        return {
-          allowed: false,
-          retryAfter: Math.ceil((fpLimit.resetTime - now) / 1000)
-        };
-      }
-
-      fpLimit.count++;
-    } else {
-      fingerprintStore.set(fingerprint, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    const fpResult = await limiter.limit(`fp:${fingerprint}`);
+    if (!fpResult.success) {
+      const retryAfter = Math.ceil((fpResult.reset - Date.now()) / 1000);
+      return { allowed: false, retryAfter: retryAfter > 0 ? retryAfter : 3600 };
     }
   }
 
@@ -301,8 +334,8 @@ export default async function handler(
   // Get fingerprint from request body (if provided by client)
   const fingerprint = req.body?.fingerprint;
 
-  // Enhanced rate limiting
-  const rateLimitResult = checkRateLimit(ip, fingerprint);
+  // Distributed rate limiting (Upstash Redis)
+  const rateLimitResult = await checkRateLimit(ip, fingerprint);
   if (!rateLimitResult.allowed) {
     res.setHeader('Retry-After', String(rateLimitResult.retryAfter || 3600));
     res.status(429).json({

@@ -65,9 +65,9 @@ const JournalModal: React.FC<JournalModalProps> = ({ isOpen, onClose, readings, 
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} maxWidth="2xl" className="flex flex-col">
+    <Modal isOpen={isOpen} onClose={onClose} maxWidth="2xl" className="flex flex-col" ariaLabelledBy="journal-modal-title">
       <header className="p-4 sm:p-6 border-b border-amber-200/50 text-center relative">
-        <h2 className="text-2xl sm:text-3xl font-bold text-orange-800 tracking-wide">リーディング履歴</h2>
+        <h2 id="journal-modal-title" className="text-2xl sm:text-3xl font-bold text-orange-800 tracking-wide">リーディング履歴</h2>
         <button onClick={onClose} className="absolute top-3 right-3 p-2 text-amber-700/80 hover:bg-amber-200/50 rounded-full" aria-label="閉じる">
            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
