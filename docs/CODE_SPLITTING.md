@@ -92,7 +92,6 @@ build: {
     output: {
       manualChunks: (id) => {
         // ベンダーチャンクの分離
-        if (id.includes('@google/genai')) return 'vendor-google-genai';
         if (id.includes('react')) return 'vendor-react';
 
         // 言語別カードデータの分離

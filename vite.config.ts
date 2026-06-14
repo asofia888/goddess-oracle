@@ -17,9 +17,6 @@ export default defineConfig(() => {
             manualChunks: (id) => {
               // Separate vendor chunks
               if (id.includes('node_modules')) {
-                if (id.includes('@google/genai')) {
-                  return 'vendor-google-genai';
-                }
                 if (id.includes('react') || id.includes('react-dom')) {
                   return 'vendor-react';
                 }
