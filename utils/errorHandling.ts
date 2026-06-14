@@ -41,28 +41,6 @@ export const ERROR_MESSAGES = {
     [ErrorCode.TIMEOUT_ERROR]: 'Request timed out. Please try again',
     [ErrorCode.PARSE_ERROR]: 'Failed to parse response',
     [ErrorCode.UNKNOWN_ERROR]: 'An unexpected error occurred'
-  },
-  es: {
-    [ErrorCode.NETWORK_ERROR]: 'Por favor verifica tu conexión a internet',
-    [ErrorCode.API_KEY_MISSING]: 'Error de configuración. Por favor espera un momento',
-    [ErrorCode.API_RATE_LIMIT]: 'Demasiadas solicitudes. Intenta de nuevo en un momento',
-    [ErrorCode.API_QUOTA_EXCEEDED]: 'Límite diario alcanzado. Intenta mañana',
-    [ErrorCode.INVALID_REQUEST]: 'Error en la solicitud. Actualiza la página e intenta de nuevo',
-    [ErrorCode.SERVER_ERROR]: 'El servidor no está disponible temporalmente',
-    [ErrorCode.TIMEOUT_ERROR]: 'Tiempo de espera agotado. Intenta de nuevo',
-    [ErrorCode.PARSE_ERROR]: 'Error al procesar la respuesta',
-    [ErrorCode.UNKNOWN_ERROR]: 'Ocurrió un error inesperado'
-  },
-  fr: {
-    [ErrorCode.NETWORK_ERROR]: 'Veuillez vérifier votre connexion internet',
-    [ErrorCode.API_KEY_MISSING]: 'Erreur de configuration. Veuillez patienter',
-    [ErrorCode.API_RATE_LIMIT]: 'Trop de requêtes. Réessayez dans un moment',
-    [ErrorCode.API_QUOTA_EXCEEDED]: 'Limite quotidienne atteinte. Réessayez demain',
-    [ErrorCode.INVALID_REQUEST]: 'Erreur de requête. Actualisez la page et réessayez',
-    [ErrorCode.SERVER_ERROR]: 'Le serveur est temporairement indisponible',
-    [ErrorCode.TIMEOUT_ERROR]: 'Délai d\'attente dépassé. Réessayez',
-    [ErrorCode.PARSE_ERROR]: 'Échec de l\'analyse de la réponse',
-    [ErrorCode.UNKNOWN_ERROR]: 'Une erreur inattendue s\'est produite'
   }
 };
 
