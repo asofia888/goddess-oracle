@@ -1,4 +1,4 @@
-import type { GoddessCardData } from './types';
+import type { GoddessCardData } from '../types';
 
 export const GODDESS_CARDS: GoddessCardData[] = [
   {

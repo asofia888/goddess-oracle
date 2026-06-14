@@ -89,13 +89,20 @@ describe('Internationalization (i18n)', () => {
     it('should have non-empty values for all translations', () => {
       const languages: Language[] = ['ja', 'en'];
 
-      languages.forEach(lang => {
-        const translations = getTranslation(lang);
-
-        Object.entries(translations).forEach(([key, value]) => {
-          expect(value).toBeTruthy();
+      // Translations contain nested objects (e.g. manualContent), so verify
+      // recursively rather than assuming every value is a string.
+      const expectNonEmpty = (value: unknown) => {
+        if (typeof value === 'string') {
           expect(value.length).toBeGreaterThan(0);
-        });
+        } else if (value && typeof value === 'object') {
+          Object.values(value).forEach(expectNonEmpty);
+        } else {
+          expect(value).toBeTruthy();
+        }
+      };
+
+      languages.forEach(lang => {
+        expectNonEmpty(getTranslation(lang));
       });
     });
   });

@@ -100,4 +100,23 @@ export const mockTranslationsEn: Translations = {
   loadingImages: 'Loading images...',
   saveReading: 'Save Reading',
   saved: 'Saved!',
+  save: 'Save',
+  howToUse: 'How to Use',
+  important: 'Important',
+  entertainment: 'Entertainment',
+  disclaimerText:
+    'This app is created for entertainment purposes and does not provide actual divination or spiritual guidance. Please consult appropriate professionals for important life decisions.',
+  iUnderstand: 'I Understand',
+  manualContent: {
+    title: 'Goddess Oracle Guidance - How to Use',
+    singleCardTitle: 'Single Card Reading',
+    singleCardDesc:
+      'Use this when you want deep insight about a specific question or situation. Click to select a card.',
+    threeCardTitle: 'Three Card Reading (Past, Present, Future)',
+    threeCardDesc:
+      'Use this when you want to understand a situation within the flow of time. Select three cards in sequence.',
+    journalTitle: 'Journal Feature',
+    journalDesc:
+      'Review your past reading results. Use this as a record of your personal growth.',
+  },
 };
