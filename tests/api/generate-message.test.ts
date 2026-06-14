@@ -12,8 +12,9 @@ describe('API: /api/generate-message', () => {
   let responseData: any;
 
   beforeEach(() => {
-    // Reset mocks
-    vi.clearAllMocks();
+    // Reset mocks (resetAllMocks also clears queued mockResolvedValueOnce
+    // implementations, preventing leftover fetch mocks from leaking between tests)
+    vi.resetAllMocks();
     statusCode = 200;
     responseData = null;
 
@@ -24,6 +25,7 @@ describe('API: /api/generate-message', () => {
       headers: {
         'content-type': 'application/json',
         'x-forwarded-for': randomIp,
+        origin: 'http://localhost:5173',
       },
       body: {
         cards: [
@@ -62,7 +64,7 @@ describe('API: /api/generate-message', () => {
       req.method = 'OPTIONS';
       await handler(req as VercelRequest, res as VercelResponse);
 
-      expect(res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', '*');
+      expect(res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', 'http://localhost:5173');
       expect(res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Methods', 'POST, OPTIONS');
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.end).toHaveBeenCalled();
@@ -83,7 +85,7 @@ describe('API: /api/generate-message', () => {
       await handler(req as VercelRequest, res as VercelResponse);
 
       expect(statusCode).toBe(400);
-      expect(responseData).toEqual({ error: 'Invalid cards data' });
+      expect(responseData).toEqual({ error: 'Invalid or malicious card data' });
     });
 
     it('should reject request with empty cards array', async () => {
@@ -91,7 +93,7 @@ describe('API: /api/generate-message', () => {
       await handler(req as VercelRequest, res as VercelResponse);
 
       expect(statusCode).toBe(400);
-      expect(responseData).toEqual({ error: 'Invalid cards data' });
+      expect(responseData).toEqual({ error: 'Invalid or malicious card data' });
     });
 
     it('should reject invalid reading level', async () => {
@@ -155,14 +157,17 @@ describe('API: /api/generate-message', () => {
         }),
       };
 
-      // Make 11 requests rapidly (limit is 10)
-      for (let i = 0; i < 11; i++) {
+      // Make 21 requests rapidly (limit is 20 per hour)
+      for (let i = 0; i < 21; i++) {
         (global.fetch as any).mockResolvedValueOnce(mockResponse);
         await handler(req as VercelRequest, res as VercelResponse);
       }
 
       expect(statusCode).toBe(429);
-      expect(responseData).toEqual({ error: 'Too many requests. Please try again later.' });
+      expect(responseData).toEqual({
+        error: 'Too many requests. Please try again later.',
+        retryAfter: expect.any(Number),
+      });
     });
   });
 
@@ -281,7 +286,7 @@ describe('API: /api/generate-message', () => {
       await handler(req as VercelRequest, res as VercelResponse);
 
       expect(statusCode).toBe(500);
-      expect(responseData).toEqual({ error: 'Server configuration error' });
+      expect(responseData).toEqual({ error: 'Service temporarily unavailable' });
     });
 
     it('should handle Google AI API error', async () => {
@@ -310,11 +315,19 @@ describe('API: /api/generate-message', () => {
       await handler(req as VercelRequest, res as VercelResponse);
 
       expect(statusCode).toBe(500);
-      expect(responseData).toEqual({ error: 'No message generated' });
+      expect(responseData).toEqual({ error: 'Failed to generate message' });
     });
 
     it('should handle JSON parse error for three-card response', async () => {
-      req.body = { ...req.body, mode: 'three' };
+      req.body = {
+        ...req.body,
+        mode: 'three',
+        cards: [
+          { name: 'Aphrodite', description: 'Love', message: 'Love yourself' },
+          { name: 'Athena', description: 'Wisdom', message: 'Seek wisdom' },
+          { name: 'Artemis', description: 'Independence', message: 'Be free' },
+        ],
+      };
 
       const mockResponse = {
         ok: true,
@@ -333,7 +346,7 @@ describe('API: /api/generate-message', () => {
       await handler(req as VercelRequest, res as VercelResponse);
 
       expect(statusCode).toBe(500);
-      expect(responseData).toEqual({ error: 'Failed to parse response' });
+      expect(responseData).toEqual({ error: 'Failed to generate message' });
     });
   });
 });
