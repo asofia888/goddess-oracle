@@ -25,6 +25,10 @@ const MAX_REQUESTS_PER_HOUR = 20;
 const MAX_VIOLATIONS = 3;
 const BAN_DURATION_SECONDS = 86400; // 24 hours
 
+// Upstream AI request timeout. Kept below the function's maxDuration so a slow
+// or hung upstream returns a clean error instead of being killed by the platform.
+const GEMINI_TIMEOUT_MS = 25000;
+
 // Allowed origins (configure based on your deployment)
 const ALLOWED_ORIGINS = [
   'https://goddess-oracle.vercel.app',
@@ -187,9 +191,16 @@ function validateCardData(cards: any[]): boolean {
 /**
  * Check origin to prevent CSRF
  */
+// Vercel preview deployments use origins like
+// https://goddess-oracle-<deployment-id>.vercel.app
+const VERCEL_PREVIEW_ORIGIN = /^https:\/\/goddess-oracle-[a-z0-9-]+\.vercel\.app$/;
+
 function isValidOrigin(origin: string | undefined): boolean {
   if (!origin) return false;
-  return ALLOWED_ORIGINS.some(allowed => origin === allowed || origin.startsWith(allowed));
+  // Exact allow-list match, plus this project's Vercel preview deployments.
+  // NOTE: never use startsWith() here — it would let
+  // https://goddess-oracle.vercel.app.evil.com slip through.
+  return ALLOWED_ORIGINS.includes(origin) || VERCEL_PREVIEW_ORIGIN.test(origin);
 }
 
 function generatePrompt(
@@ -278,6 +289,10 @@ Avoid strong imperatives, definitive statements, language that invokes fear or g
     }
   }
 }
+
+// Give the function enough execution time for the upstream AI call.
+// Must exceed GEMINI_TIMEOUT_MS so the AbortController can fire first.
+export const maxDuration = 30;
 
 export default async function handler(
   req: VercelRequest,
@@ -392,39 +407,59 @@ export default async function handler(
     // Generate prompt
     const prompt = generatePrompt(cards, readingLevel, language, mode);
 
-    // Call Google Generative AI (using latest stable flash model)
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt,
-                },
-              ],
-            },
-          ],
-          generationConfig: mode === 'three' ? {
-            responseMimeType: 'application/json',
-            responseSchema: {
-              type: 'object',
-              properties: {
-                past: { type: 'string', description: '過去のカードに関するメッセージです。' },
-                present: { type: 'string', description: '現在のカードに関するメッセージです。' },
-                future: { type: 'string', description: '未来のカードに関するメッセージです。' },
+    // Call Google Generative AI (using latest stable flash model) with a timeout so
+    // a slow or hung upstream returns a clean error instead of holding the function.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+
+    let response: Response;
+    try {
+      response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: controller.signal,
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: prompt,
+                  },
+                ],
               },
-              required: ['past', 'present', 'future'],
-            },
-          } : undefined,
-        }),
+            ],
+            generationConfig: mode === 'three' ? {
+              responseMimeType: 'application/json',
+              responseSchema: {
+                type: 'object',
+                properties: {
+                  past: { type: 'string', description: '過去のカードに関するメッセージです。' },
+                  present: { type: 'string', description: '現在のカードに関するメッセージです。' },
+                  future: { type: 'string', description: '未来のカードに関するメッセージです。' },
+                },
+                required: ['past', 'present', 'future'],
+              },
+            } : undefined,
+          }),
+        }
+      );
+    } catch (fetchError) {
+      if ((fetchError as any)?.name === 'AbortError') {
+        console.error('[API ERROR] Google AI request timed out:', {
+          timeoutMs: GEMINI_TIMEOUT_MS,
+          timestamp: new Date().toISOString(),
+        });
+        res.status(504).json({ error: 'Request timed out. Please try again.' });
+        return;
       }
-    );
+      throw fetchError;
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
