@@ -2,62 +2,67 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Run and deploy your AI Studio app
+# 女神のオラクルガイダンス / Goddess Oracle Guidance
 
-This contains everything you need to run your app locally.
+48柱の女神カードからリーディングを行うオラクルカード Web アプリです。1枚引き・3枚引き（過去／現在／未来）に対応し、AIが生成したパーソナルなメッセージと女神のアートワークを表示します。日本語・英語対応。
 
-View your app in AI Studio: https://ai.studio/apps/drive/1o31BlCTBp2cE0vRK6kvtl8lTNy0CfgPe
+**Live:** https://goddess-oracle.vercel.app
 
-**Deployed on Vercel with Node.js 22.x support**
+## 主な機能
 
-## Run Locally
+- 🔮 1枚引き / 3枚引き（過去・現在・未来）スプレッド
+- 🌗 通常リーディング / 深い洞察リーディング
+- 🤖 Google Generative AI によるパーソナライズされたメッセージ生成
+- 🖼️ 女神ごとのアートワーク表示
+- 📓 リーディング履歴（ブラウザの localStorage に保存）
+- 🌐 日本語・英語（ブラウザの言語設定から自動判定）
 
-**Prerequisites:**  Node.js
+## 技術スタック
 
+- **フロントエンド:** React 19 + TypeScript + Vite + Tailwind CSS v4
+- **API:** Vercel Serverless Functions（`api/generate-message.ts`）
+- **AI:** Google Generative AI（Gemini）
+- **レート制限:** Upstash Redis（未設定時はインメモリにフォールバック）
+- **テスト / CI:** Vitest + GitHub Actions
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## ローカルでの実行
 
----
+**前提:** Node.js 22.x
 
-## OGP画像の作成について
+1. 依存関係をインストール:
+   ```bash
+   npm install
+   ```
+2. 環境変数を設定: [.env.example](.env.example) をコピーして `.env.local` を作成し、値を設定します。
+   ```bash
+   cp .env.example .env.local
+   ```
+   - `GOOGLE_API_KEY` … Google Generative AI の API キー（[取得はこちら](https://makersuite.google.com/app/apikey)）。**サーバーサイドでのみ使用**します。
+   - `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` …（任意）本番のレート制限用。未設定でもインメモリ方式で動作します。
+3. 開発サーバーを起動:
+   ```bash
+   npm run dev
+   ```
 
-現在、OGP（Open Graph Protocol）画像はプレースホルダーファイルとして配置されています。
+> メッセージ生成 API（`/api/generate-message`）は Vercel の関数として動作します。ローカルで関数も含めて動かす場合は `vercel dev` を使用してください。API が利用できない場合は、各カードの既定メッセージにフォールバックします。
 
-### 推奨される画像仕様
-- **サイズ**: 1200×630ピクセル
-- **フォーマット**: JPG
-- **ファイル名**: `public/ogp-image.jpg`
+## スクリプト
 
-### 画像作成ツールの提案
-以下のツールで美しいOGP画像を作成できます：
+```bash
+npm run typecheck   # 型チェック
+npm run test        # テスト（watch）
+npm run test:run    # テスト（1回実行）
+npm run build       # 本番ビルド
+```
 
-#### 1. Canva
-- テンプレート: "Facebook投稿" または "Twitterヘッダー"
-- サイズを1200×630に調整
-- スピリチュアル系のテンプレートを選択
+## デプロイ（Vercel）
 
-#### 2. Figma
-- フレームサイズ: 1200×630
-- グラデーション背景: 紫系（#faf5ff → #f3e8ff）
-- フォント: エレガントなセリフ体
+1. リポジトリを Vercel に接続します（Node.js 22.x）。
+2. プロジェクトの **Environment Variables** に `GOOGLE_API_KEY`（および任意で Upstash の 2 変数）を設定します。
+3. push すると自動でビルド・デプロイされます。
 
-#### 3. Adobe Photoshop/Illustrator
-- 高品質なグラフィック作成が可能
+セキュリティ設計（レート制限・オリジン検証・入力バリデーション等）は [SECURITY.md](SECURITY.md) を参照してください。
 
-### 画像内容の推奨要素
-- アプリタイトル「女神のオラクルガイダンス」
-- 英語タイトル「Goddess Oracle Guidance」
-- 女神やスピリチュアルなモチーフ
-- 4言語対応の表示（🌟 日本語 • English • Español • Français 🌟）
-- エレガントな紫・琥珀色のカラーパレット
+## OGP / SEO
 
-### 現在のOGPメタタグ
-HTMLファイルには完全なOGPメタタグが設定済みです：
-- Facebook、Twitter用の最適化
-- 多言語対応（ja_JP, en_US, es_ES, fr_FR）
-- 適切な画像サイズとalt属性
-# Trigger Vercel deployment Thu Sep 25 18:19:23 JST 2025
+OGP・Twitter Card・JSON-LD 構造化データは `index.html` に設定済みです。OGP 画像は `public/ogp.webp`（1200×630, WebP）を使用しています。差し替える場合は、同じパス・サイズの WebP を配置してください。

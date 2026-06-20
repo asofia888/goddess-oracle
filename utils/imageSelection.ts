@@ -118,58 +118,19 @@ const goddessNameToFolder: Record<string, string> = {
 };
 
 /**
- * Number of images available for each goddess (4-5 images)
- * This mapping can be dynamically determined or hardcoded
+ * Available image indices for each goddess.
+ *
+ * Images are normally numbered sequentially (1.webp..5.webp), but a few
+ * goddesses have gaps in their numbering. Listing the actual available
+ * indices prevents requesting a non-existent file (404). Only goddesses
+ * that deviate from the default need an entry here.
  */
-const goddessImageCounts: Record<string, number> = {
-  'amenouzume': 5,
-  'aphrodite': 5,
-  'arianrhod': 5,
-  'artemis': 5,
-  'athena': 5,
-  'bastet': 5,
-  'benzaiten': 5,
-  'brigid': 5,
-  'cerridwen': 5,
-  'coatlicue': 5,
-  'danu': 5,
-  'demeter': 5,
-  'durga': 5,
-  'eostre': 5,
-  'ereshkigal': 5,
-  'freya': 5,
-  'hathor': 5,
-  'hekate': 5,
-  'hera': 5,
-  'inanna': 5,
-  'ishtar': 5,
-  'isis': 5,
-  'ixchel': 5,
-  'izanami': 5,
-  'jomon_venus': 5,
-  'kali': 5,
-  'kannon': 5,
-  'kisagatendi': 5,
-  'lakshmi': 5,
-  'lilith': 5,
-  'maat': 5,
-  'marimata': 5,
-  'morrigan': 5,
-  'nanabuluku': 5,
-  'nuwa': 5,
-  'oshun': 5,
-  'pachamama': 5,
-  'parvati': 5,
-  'pele': 5,
-  'persephone': 5,
-  'rhiannon': 5,
-  'saraswati': 5,
-  'sekhmet': 5,
-  'sita': 5,
-  'skadi': 5,
-  'tlazolteotl': 5,
-  'xiwangmu': 5,
-  'yemaya': 5,
+const DEFAULT_IMAGE_INDICES = [1, 2, 3, 4, 5];
+
+const goddessImageIndices: Record<string, number[]> = {
+  arianrhod: [1, 2, 3, 5, 6],
+  kannon: [1, 2, 3, 5, 6],
+  nanabuluku: [1, 2, 3, 5, 7],
 };
 
 /**
@@ -187,8 +148,8 @@ export function getRandomGoddessImage(card: GoddessCardData): string {
     return `/images/amenouzume/1.webp`;
   }
 
-  const imageCount = goddessImageCounts[folderName] || 5;
-  const randomIndex = Math.floor(Math.random() * imageCount) + 1; // 1-based indexing
+  const indices = goddessImageIndices[folderName] ?? DEFAULT_IMAGE_INDICES;
+  const randomIndex = indices[Math.floor(Math.random() * indices.length)];
 
   return `/images/${folderName}/${randomIndex}.webp`;
 }
