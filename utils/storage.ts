@@ -77,14 +77,6 @@ export const saveReading = (reading: NewReading): boolean => {
       return false;
     }
 
-    console.log('Saving reading with data:', {
-      mode: reading.mode,
-      cardsLength: reading.cards.length,
-      messagesLength: reading.generatedMessages?.length || 0,
-      hasImageUrl: !!reading.generatedImageUrl,
-      readingLevel: reading.readingLevel
-    });
-
     const readings = getReadings();
 
     // Create backup before modifying
@@ -147,7 +139,6 @@ export const saveReading = (reading: NewReading): boolean => {
         localStorage.setItem(JOURNAL_KEY, JSON.stringify([newReading]));
       }
     }
-    console.log('Reading saved successfully. Total readings:', finalReadings.length);
     return true;
   } catch (error) {
     console.error("Error saving to localStorage", error);
